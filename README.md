@@ -81,6 +81,8 @@
 ![login](https://github.com/bluenote00/HIJOB_recruitsystem/assets/118717795/72ad3f77-d3dd-48af-aa4e-3865497dbc41)
 
 <br>
+
 + 메인화면_취준생 로그인시
 ![main](https://github.com/bluenote00/HIJOB_recruitsystem/assets/118717795/b419e916-bb0b-4c6c-a692-655ce81d18a9)
+
 
