@@ -56,3 +56,14 @@
 + JSP 2.2
 
 <br>
+
+### 🏗 ERD 구조도
+![하이잡최종ERD_0712_수정](https://github.com/bluenote00/HIJOB_recruitsystem/assets/118717795/d2af5c47-fc0e-453e-8d9b-f5743dc6ac15)
+
+
+### 🏞 MAIN VIEW
++ 로그인 화면
+![login](https://github.com/bluenote00/HIJOB_recruitsystem/assets/118717795/72ad3f77-d3dd-48af-aa4e-3865497dbc41)
+
+<br>
++ 메인화면_취준생 로그인시
