@@ -9,6 +9,7 @@
 <br>사업자들과 구직자들은 적합한 파트너를 찾는데 어려움을 느끼고 있습니다. 
 <br>이를 해결하기 위해 중간 다리 역할을 수행할 플랫폼의 필요성을 느껴 프로젝트 주제로 선정하게 되었습니다.
 <br>
+<br>
 ![hijob](https://github.com/bluenote00/HIJOB_recruitsystem/assets/118717795/45d2e32c-de15-44cf-bec0-92e876170846)
 
 <br>
