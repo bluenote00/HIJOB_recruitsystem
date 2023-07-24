@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.cmuQna.dao.CmuQnaDao">
+
+	<!--  목록 조회 -->
+	<select id="questionlist" resultType="kr.happyjob.study.cmuQna.model.QuestionModel">
+		
+			select qna_no
+     			  ,qa.qna_title
+     			  ,qa.qna_uploaddate
+     			  ,qa.qna_content
+     			  ,ui.user_no
+     			  ,ui.loginID
+     			  ,ui.name
+     			  ,ui.user_coname
+     			  
+    	      from tb_qna qa
+    	      		inner join tb_userinfo ui on ui.loginID = qa.loginID
+    	      
+    	     
+    	      		    		  	 
+      		  
+     	
+		 <where>
+		<if test="(delyn != null) and (!delyn.equals(''))">
+		    and qa.qna_del_yn = #{delyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and qa.qna_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{sname}, '%')
+						       or qa.qna_title LIKE CONCAT('%', #{sname}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where>		 
+		ORDER BY qa.qna_no DESC
+		LIMIT #{pageindex}, #{pageSize}
+		 
+	</select>
+	
+	<!-- 목록 총 갯수 조회 -->
+	<select id="countquestionlist" resultType="int">
+		
+		select count(*)
+          from tb_qna qa
+               inner join tb_userinfo ui on ui.loginID = qa.loginID 
+		<where>
+		<if test="(delyn != null) and (!delyn.equals(''))">
+		    and qa.qna_del_yn = #{delyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and qa.qna_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{sname}, '%')
+						       or qa.qna_title LIKE CONCAT('%', #{sname}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where>		
+	</select>
+	
+	<select id="questionselectone" resultType="kr.happyjob.study.cmuQna.model.QuestionModel">
+		select qna_no
+     			  ,qa.qna_title
+     			  ,qa.qna_uploaddate
+     			  ,qa.qna_content
+     			  ,ui.user_no
+     			  ,ui.user_coname
+     			  ,ui.loginID
+     			  ,ui.name
+			     
+      	 from tb_qna qa
+       		inner join tb_userinfo ui on ui.loginID = qa.loginID
+ 	   where qa.qna_no =  #{qna_no}           
+	</select>
+	
+	<insert id="questioninsert" parameterType="kr.happyjob.study.cmuQna.model.QuestionModel" >
+	    <selectKey  keyProperty="qna_no" resultType="int" order="BEFORE">
+            select ifnull(max(qna_no+1),1) from tb_qna
+        </selectKey>
+		insert into tb_qna
+						(
+						qna_no
+						,user_no
+						,loginID
+						,qna_content
+						,qna_uploaddate
+						,qna_uploader
+						,qna_title
+						)
+			values (
+					#{qna_no}
+					,(select user_no from tb_userinfo where loginID=#{loginID})
+					,#{loginID}
+					,#{qna_content}
+					,now()
+					,(select name from tb_userinfo where loginID=#{loginID})
+					,#{qna_title}
+			)
+		 
+</insert>
+        		
+
+	
+	<update id="questionupdate" >
+	    update tb_qna 
+	         set qna_title =  #{qna_title}   
+                , qna_content =  #{qna_content}   
+                , qna_uploaddate =  now()
+            
+                
+	     where  qna_no =  #{qna_no}
+	</update>
+	
+	<delete id="questiondelete" >
+	   	delete from tb_qna
+	     where  qna_no =  #{qna_no}  
+	</delete>
+	
+	
+	
+	
+</mapper>

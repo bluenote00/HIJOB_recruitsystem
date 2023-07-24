@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.myplil.dao.myplilDao">
+
+
+
+   <!-- 좋아요 목록 조회 -->
+   <select id="likelist" resultType="kr.happyjob.study.myplil.model.myplilModel">
+   /*kr.happyjob.study.myplil.dao.myplilDao.likelist*/
+	 
+
+		 select lk.corecruit_no
+		 	   ,lk.like_number
+		       ,@rownum := @rownum + 1 AS re_num
+		       ,lkl.like_cnt
+		       ,lk.loginID as clickuser
+		       ,ci.corecruit_title
+			   ,ci.like_yn
+			   ,ci.loginID as companyuser
+		   from (SELECT @rownum :=0) AS r,
+		         tb_like lk
+		        
+		        inner join ( 
+		                     select corecruit_no
+		                           ,count(*) like_cnt
+		                       from tb_like
+		                      group by  corecruit_no
+		                    ) lkl on lk.corecruit_no = lkl.corecruit_no  
+		        inner join tb_corecruit ci on ci.corecruit_no = lk.corecruit_no             
+				where lk.loginID =  #{loginid}     
+    
+
+
+	   LIMIT #{pageindex}, #{pageSize}
+	   
+   </select>
+ 
+
+
+   <!-- <where>
+		<if test="(likeyn != null) and (!likeyn.equals(''))">
+		    and tl.like_yn = #{likeyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{sname}, '%')
+						       or nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where> -->
+	   	
+	   
+ 
+   <!-- 좋아요 목록 카운트 조회 -->
+   <select id="likecountlist" resultType="int">
+   /*kr.happyjob.study.myplil.dao.myplilDao.likecountlist*/
+   select count(*)
+	from tb_like tl
+  		inner join tb_userinfo ui on ui.loginID = tl.loginID
+  		left outer join tb_corecruit ci on ci.corecruit_no = tl.corecruit_no
+   </select>
+  		
+  		
+  		<!-- 
+   <where>
+		<if test="(likeyn != null) and (!likeyn.equals(''))">
+		    and tl.like_yn = #{likeyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{sname}, '%')
+						       or nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where> -->
+	   	
+   
+   
+   	<delete id="likedelete">
+			    
+	    delete 
+	    from tb_like
+		where corecruit_no = #{corecruit_no} and loginID = #{loginID} 
+	      
+	</delete>
+   
+   
+   	<update id="likeRefresh">
+			    
+	       update tb_corecruit ci
+		set like_yn = (  
+		                   select case when count(loginID) = 0 then 'N'
+		                               else 'Y'
+		                          end     
+		                     from tb_like tl 
+		                    where tl.corecruit_no = ci.corecruit_no  )
+	      
+	</update>
+   
+   
+	<insert id="likeInsert">
+	    <selectKey resultType="int" keyProperty="likeno" order="BEFORE">
+            select ifnull(max(like_number),0) + 1 from tb_like
+        </selectKey>   
+	    
+	
+	    	    
+	    insert into tb_like 
+              (
+                  like_number
+	              , corecruit_no
+                  , loginID
+                  
+	             )
+	    values (
+	               #{likeno}
+	               ,(select corecruit_no FROM tb_corecruit where tb_corecruit.corecruit_no = #{corecruit_no})
+	               ,#{loginid}
+	               )
+	    
+	    
+	    
+	</insert>
+   
+   
+   
+</mapper>

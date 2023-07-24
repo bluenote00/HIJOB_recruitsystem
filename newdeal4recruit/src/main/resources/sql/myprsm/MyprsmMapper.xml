@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.myprsm.dao.MyprsmDao">
+
+	
+	<select id="resumelist" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+		SELECT
+    		re.loginID,
+    		re.resume_no,
+   		 	re.resume_name,
+    		re.resume_openunopen,
+    		DATE_FORMAT(re.resume_regdate, '%Y-%m-%d') AS resume_regdate
+		FROM
+    		tb_resume re
+    		INNER JOIN tb_userinfo ui ON re.loginID = ui.loginID
+		WHERE
+    		re.loginID = #{loginID}
+		ORDER BY
+    		re.resume_no DESC
+
+	</select>
+	
+	<update id = "updatecheck">
+	
+	update tb_resume
+		set 
+			resume_openunopen  = #{result}
+		where resume_no = #{resume_no}
+	
+	</update>
+	
+	
+	<select id="countresumelist" resultType="int">
+		select
+		  count(*)
+		from tb_resume
+		where loginID = #{loginID}
+	</select>
+	
+	<update id="totalupdate" >
+		update tb_resume
+			set 
+				resume_no = #{resume_no}
+				,resume_name = #{resume_name}
+				,skill1 = #{skill1}
+				,skill2 = #{skill2}
+				,skill3 = #{skill3}
+			where resume_no = #{resume_no}
+	</update>
+	
+	<delete id="totalDelete">
+		delete from tb_resume
+			where resume_no = #{resume_no}
+	</delete>
+	
+	<insert id="resumenoinsert">
+		insert into tb_resume
+			 (resume_no
+			  ,resume_regdate
+        	  ,loginID
+        	  ,resume_openunopen)
+			values
+			((select NUM from (select ifnull(max(resume_no),0)+1 AS NUM from tb_resume) A)
+			,now()
+      		,#{loginID}
+      		,'N')
+	</insert>
+	
+	<select id="resumenoselect" resultType="int">
+		select max(resume_no)
+		  from tb_resume
+	</select>
+		
+	<insert id="pictureinsertfile">
+	    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+            select ifnull(max(att_no),0) + 1 from tb_att
+        </selectKey>  
+	    insert into tb_att
+	         (
+	             att_no
+               , att_name
+               , att_phypath
+               , att_logpath
+               , att_extname
+	         ) values (
+	            #{no}
+	           ,#{filereturn.file_nm}     
+	           ,#{filereturn.file_loc}   
+	           ,#{filereturn.vrfile_loc}   
+	           ,#{filereturn.fileExtension}  
+	         )
+	</insert>
+	
+<!-- 	<update id="resumeupdateatt"> -->
+<!-- 	update tb_resume re -->
+<!--   			left outer join tb_att at on re.att_no =  at.att_no -->
+<!--   		inner join tb_userinfo ui on re.loginID = ui.loginID  -->
+<!--   		set re.att_no = 23 -->
+<!--     	where re.loginID = 'abc123'; -->
+<!-- 	</update> -->
+
+	<select id="resumeselectone" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+		select 
+			resume_no
+			,resume_name
+			,skill1
+			,skill2
+			,skill3
+			,att_no
+		from tb_resume
+		 where resume_no = #{resume_no}
+	
+	</select>
+	
+	<select id="resumeForm" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+      SELECT 
+      		 ui.loginID
+             , ui.name as name
+             , ui.user_hp
+             ,ui.user_birthday
+             ,max(re.resume_no) as resume_no
+      	FROM tb_resume re
+      		inner join tb_userinfo ui
+     		WHERE  ui.loginID =#{loginID}
+	</select>
+	
+
+	<insert id="resumelinkeinsert" >
+		<selectKey resultType="int" keyProperty="linkno" order="BEFORE"> <!--  no:  BEFORE  insert 문 실행전에 실행해라 select문 값을 no라는 키로 담ㅁ김 -->
+            select ifnull(max(link_no),0) + 1 from tb_link
+        </selectKey>
+	    insert into tb_link 
+	             (
+	             link_no
+				 ,resume_no
+				 ,link_name
+				 ,link_address
+	             )
+	    values (
+	    		#{linkno}
+	    		,#{resume_no}
+	            ,#{link_name}
+	            ,#{link_address}
+			)
+	</insert>
+	
+	<select id="resumelinklist" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+		select
+			resume_no
+			,link_no
+			,link_name
+			,link_address
+		from tb_link
+		    WHERE resume_no = #{resume_no}
+	</select>
+	
+	<select id="countlinklist" resultType="int">
+		select
+		  count(*)
+		from tb_link
+		  where resume_no = #{resume_no}
+	</select>
+	
+	<select id="linkselectone" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+	       select
+              resume_no
+              ,link_no
+              ,link_name
+              ,link_address
+          	from tb_link
+        		where link_no = #{link_no}               
+	</select>
+	
+	<update id="resumelinkupdate">
+	    update tb_link
+	         set link_no =  #{link_no}   
+                ,link_name =  #{link_name}   
+                ,link_address = #{link_address}    
+	     	where link_no =  #{link_no}  
+	</update>
+	
+	<delete id="resumelinkdelete">
+		delete from tb_link	
+		       <choose>
+					<when
+						test="(link_no != null) and (!link_no.equals(''))">
+						where link_no = #{link_no}
+					</when>
+					<otherwise>
+						where resume_no = #{resume_no}
+					</otherwise>
+				</choose>
+	</delete>
+	
+	<insert id="resumeeduinsert">
+			<selectKey resultType="int" keyProperty="degreeno" order="BEFORE"> <!--  no:  BEFORE  insert 문 실행전에 실행해라 select문 값을 no라는 키로 담ㅁ김 -->
+                select ifnull(max(degree_code),0) + 1 from tb_degree
+            </selectKey>
+		insert into tb_degree
+			(
+			resume_no
+			,degree_code
+			,graduation_year
+			,graduation_month
+			,degree_dropout
+			,degree_division
+			,degree_school
+			,degree_major
+			,degree_grade
+			,degree_credit
+			)
+			values
+			(
+			#{resume_no}
+			,#{degreeno}
+			,#{graduation_year}
+			,#{graduation_month}
+			,#{degree_dropout}
+			,#{degree_division}
+			,#{degree_school}
+			,#{degree_major}
+			,#{degree_grade}
+			,#{degree_credit}
+			)
+	</insert>
+	
+		<select id="resumeedulist" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+		select
+			resume_no
+			,degree_code
+			,degree_school
+			,degree_major
+		from tb_degree
+		    WHERE resume_no = #{resume_no}
+	</select>
+	
+	<select id="countedulist" resultType="int">
+		select
+		  count(*)
+		from tb_degree
+		  where resume_no = #{resume_no}
+	</select>
+	
+	<select id="eduselectone" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+	       select
+              resume_no
+              ,degree_code
+              ,graduation_year
+              ,graduation_month
+              ,degree_dropout
+              ,degree_division
+              ,degree_school
+              ,degree_major
+              ,degree_grade
+              ,degree_credit
+          	from tb_degree
+        		where degree_code = #{degree_code}               
+	</select>
+	
+	<update id="resumeeduupdate">
+	    update tb_degree
+	         set degree_code =  #{degree_code}
+	         	,graduation_year = #{graduation_year}
+	         	,graduation_month = #{graduation_month}
+	         	,degree_dropout = #{degree_dropout}
+	         	,degree_division = #{degree_division}
+                ,degree_school =  #{degree_school}   
+                ,degree_major = #{degree_major}  
+                ,degree_grade = #{degree_grade} 
+                ,degree_credit = #{degree_credit}
+	     	where degree_code =  #{degree_code}  
+	</update>
+	
+	<delete id="resumeedudelete">
+		delete from tb_degree
+				<choose>
+					<when
+						test="(degree_code != null) and (!degree_code.equals(''))">
+						where degree_code = #{degree_code}
+					</when>
+					<otherwise>
+						where resume_no = #{resume_no}
+					</otherwise>
+				</choose>
+	</delete>
+	
+	
+	<insert id="resumecareerinsert">
+		<selectKey resultType="int" keyProperty="careerno" order="BEFORE"> <!--  no:  BEFORE  insert 문 실행전에 실행해라 select문 값을 no라는 키로 담ㅁ김 -->
+                select ifnull(max(career_code),0) + 1 from tb_career
+          </selectKey>
+          
+          insert into tb_career
+          	(
+          		resume_no
+          		,career_code
+          		,career_joinYear
+          		,career_joinMonth
+          		,career_outYear
+          		,career_outMonth
+          		,career_inoffice
+          		,career_company
+          		,career_department
+          		,career_position
+          		,career_skill1
+          		,career_skill2
+          		,career_skill3
+          		,career_introduction
+          	)
+          	values
+          	(
+          		 #{resume_no}
+          		,#{careerno}
+          		,#{career_joinYear}
+				,#{career_joinMonth}
+				,#{career_outYear}
+				,#{career_outMonth}
+				,#{career_inoffice}
+				,#{career_company}
+				,#{career_department}
+				,#{career_position}
+				,#{career_skill1}
+				,#{career_skill2}
+				,#{career_skill3}
+				,#{career_introduction}
+          	)
+          	
+	</insert>
+	
+	<select id="resumecareerlist" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+		select
+			resume_no
+			,career_code
+			,career_company
+			,career_introduction
+		from tb_career
+		    WHERE resume_no = #{resume_no}
+	</select>
+	
+	<select id="countcareerlist" resultType="int">
+		select
+		  count(*)
+		from tb_career
+		  where resume_no = #{resume_no}
+	</select>
+	
+	<select id="careerselectone" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+	       select
+              resume_no
+              ,career_code
+              ,career_joinYear
+              ,career_joinMonth
+              ,career_outYear
+              ,career_outMonth
+              ,career_inoffice
+              ,career_company
+              ,career_department
+              ,career_position
+              ,career_skill1
+              ,career_skill2
+              ,career_skill3
+              ,career_introduction
+          	from tb_career
+        		where career_code = #{career_code}               
+	</select>
+	
+	<update id="resumecareerupdate">
+	    update tb_career
+	         set career_code =  #{career_code}
+	         	,career_joinYear = #{career_joinYear}
+	         	,career_joinMonth = #{career_joinMonth}
+	         	,career_outYear = #{career_outYear}
+	         	,career_outMonth = #{career_outMonth}
+                ,career_inoffice =  #{career_inoffice}   
+                ,career_company = #{career_company}  
+                ,career_department = #{career_department} 
+                ,career_position = #{career_position}
+                ,career_skill1 = #{career_skill1}
+                ,career_skill2 = #{career_skill2}
+                ,career_skill3 = #{career_skill3}
+                ,career_introduction = #{career_introduction}
+	     	where career_code =  #{career_code}  
+	</update>
+	
+	<delete id="resumecareerdelete">
+		delete from tb_career
+				<choose>
+					<when
+						test="(career_code != null) and (!career_code.equals(''))">
+						where career_code = #{career_code}
+					</when>
+					<otherwise>
+						where resume_no = #{resume_no}
+					</otherwise>
+				</choose>
+	</delete>
+	
+	
+	
+	<select id="resumeprojectlist" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+		select
+			resume_no
+			,project_code
+			,project_name
+			,project_detail
+		from tb_project
+		    WHERE resume_no = #{resume_no}
+	</select>
+	
+	<select id="countprojectlist" resultType="int">
+		select
+		  count(*)
+		from tb_project
+		  where resume_no = #{resume_no}
+	</select>
+	
+	
+	<insert id="resumeprojectinsert">
+		<selectKey resultType="int" keyProperty="porjectno" order="BEFORE"> <!--  no:  BEFORE  insert 문 실행전에 실행해라 select문 값을 no라는 키로 담ㅁ김 -->
+                select ifnull(max(project_code),0) + 1 from tb_project
+        </selectKey>
+	
+		insert into tb_project 
+			(
+				resume_no
+          		,project_code
+          		,project_startYear
+          		,project_startMonth
+          		,project_endYear
+          		,project_endMonth
+          		,project_progress
+          		,project_name
+          		,project_skill1
+          		,project_skill2
+          		,project_skill3
+          		,project_detail
+				,project_link
+			)
+			values
+			(
+				#{resume_no}
+          		,#{porjectno}
+          		,#{project_startYear}
+          		,#{project_startMonth}
+          		,#{project_endYear}
+          		,#{project_endMonth}
+          		,#{project_progress}
+          		,#{project_name}
+          		,#{project_skill1}
+          		,#{project_skill2}
+          		,#{project_skill3}
+          		,#{project_detail}
+          		,#{project_link}
+			)
+	
+	</insert>
+	
+		<select id="projectselectone" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+	       select
+              resume_no
+              ,project_code
+              ,project_startYear
+              ,project_startMonth
+              ,project_endYear
+              ,project_endMonth
+              ,project_progress
+              ,project_name
+              ,project_skill1
+              ,project_skill2
+              ,project_skill3
+              ,project_detail
+              ,project_link
+              
+          	from tb_project
+        		where project_code = #{project_code}               
+	</select>
+	
+	<update id="resumeprojectupdate">
+	    update tb_project
+	         set project_code =  #{project_code}
+	         	,project_startYear = #{project_startYear}
+	         	,project_startMonth = #{project_startMonth}
+	         	,project_endYear = #{project_endYear}
+	         	,project_endMonth = #{project_endMonth}
+                ,project_progress =  #{project_progress}   
+                ,project_name = #{project_name}  
+                ,project_skill1 = #{project_skill1} 
+                ,project_skill2 = #{project_skill2}
+                ,project_skill3 = #{project_skill3}
+                ,project_detail = #{project_detail}
+                ,project_link = #{project_link}
+	     	where project_code =  #{project_code}  
+	</update>
+	
+	<delete id="resumeprojectdelete">
+		delete from tb_project
+				<choose>
+					<when
+						test="(project_code != null) and (!project_code.equals(''))">
+						where project_code = #{project_code}
+					</when>
+					<otherwise>
+						where resume_no = #{resume_no}
+					</otherwise>
+				</choose>
+	</delete>
+	
+	<select id="resumeacademylist" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+		select
+			resume_no
+			,train_code
+			,train_name
+			,train_agency
+		from tb_train
+		    WHERE resume_no = #{resume_no}
+	</select>
+	
+	<select id="countacademylist" resultType="int">
+		select
+		  count(*)
+		from tb_train
+		  where resume_no = #{resume_no}
+	</select>
+	
+	<insert id="resumeacademyinsert">
+		<selectKey resultType="int" keyProperty="trainno" order="BEFORE"> <!--  no:  BEFORE  insert 문 실행전에 실행해라 select문 값을 no라는 키로 담ㅁ김 -->
+                select ifnull(max(train_code),0) + 1 from tb_train
+        </selectKey>
+		
+		insert into tb_train
+			(
+				resume_no
+				,train_code
+				,train_startYear
+				,train_startMonth
+				,train_endYear
+				,train_endMonth
+				,train_name
+				,train_agency
+				,train_detail
+			)
+			values
+			(
+				#{resume_no}
+				,#{trainno}
+				,#{train_startYear}
+				,#{train_startMonth}
+				,#{train_endYear}
+				,#{train_endMonth}
+				,#{train_name}
+				,#{train_agency}
+				,#{train_detail}
+			)
+	</insert>
+	
+	<select id="academyselectone" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+	       select
+              resume_no
+              ,train_code
+              ,train_startYear
+              ,train_startMonth
+              ,train_endYear
+              ,train_endMonth
+              ,train_name
+              ,train_agency
+              ,train_detail
+          	from tb_train
+        		where train_code = #{train_code}               
+	</select>
+	
+	<update id="resumeacademyupdate">
+	    update tb_train
+	         set train_code =  #{train_code}
+	         	,train_startYear = #{train_startYear}
+	         	,train_startMonth = #{train_startMonth}
+	         	,train_endYear = #{train_endYear}
+	         	,train_endMonth = #{train_endMonth}
+                ,train_name =  #{train_name}   
+                ,train_agency = #{train_agency}  
+                ,train_detail = #{train_detail} 
+	     	where train_code =  #{train_code}  
+	</update>
+	
+	<delete id="resumeacademydelete">
+		delete from tb_train
+				<choose>
+					<when
+						test="(train_code != null) and (!train_code.equals(''))">
+						where train_code = #{train_code}
+					</when>
+					<otherwise>
+						where resume_no = #{resume_no}
+					</otherwise>
+				</choose>
+	</delete>
+	
+	
+	<select id="resumeintroductionlist" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+		select
+			resume_no
+			,introduce_no
+			,introduce_name
+			,introduce_content
+		from tb_introduction
+		    WHERE resume_no = #{resume_no}
+	</select>
+	
+	<select id="countintroductionlist" resultType="int">
+		select
+		  count(*)
+		from tb_introduction
+		  where resume_no = #{resume_no}
+	</select>
+	
+	<insert id="resumeintroductioninsert">
+		<selectKey resultType="int" keyProperty="introduceno" order="BEFORE"> <!--  no:  BEFORE  insert 문 실행전에 실행해라 select문 값을 no라는 키로 담ㅁ김 -->
+                select ifnull(max(introduce_no),0) + 1 from tb_introduction
+        </selectKey>
+		insert into tb_introduction
+		(
+			resume_no
+			,introduce_no
+			,introduce_name
+			,introduce_content
+		)
+		values
+		(
+			#{resume_no}
+			,#{introduceno}
+			,#{introduce_name}
+			,#{introduce_content}
+		)
+	
+	</insert>
+	
+			<select id="introductionselectone" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+	       select
+              resume_no
+              ,introduce_no
+              ,introduce_name
+              ,introduce_content
+
+          	from tb_introduction
+        		where introduce_no = #{introduce_no}               
+	</select>
+	
+	<update id="resumeintroductionupdate">
+	    update tb_introduction
+	         set introduce_no =  #{introduce_no}
+	         	,introduce_name = #{introduce_name}
+	         	,introduce_content = #{introduce_content}
+	     	where introduce_no =  #{introduce_no}  
+	</update>
+	
+	<delete id="resumeintroductiondelete">
+		delete from tb_introduction
+				<choose>
+					<when
+						test="(introduce_no != null) and (!introduce_no.equals(''))">
+						where introduce_no = #{introduce_no}
+					</when>
+					<otherwise>
+						where resume_no = #{resume_no}
+					</otherwise>
+				</choose>
+	</delete>
+
+			<select id="selecttitle" resultType="kr.happyjob.study.myprsm.model.MyprsmModel">
+	       select
+              resume_no
+              ,resume_name
+          	from tb_resume
+        		where resume_no = #{resume_no}               
+	</select>
+</mapper>

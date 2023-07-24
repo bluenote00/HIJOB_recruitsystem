@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.mypAlr.dao.MypAlrDao">
+
+	<!--  목록 조회 -->
+	<select id="alertlist" resultType="kr.happyjob.study.mypAlr.model.AlertModel">
+		
+       
+        select ui.user_no
+        	,ui.name
+        	,nt.user_no2
+        	,nt.notify_no
+        	,nt.notify_title
+        	,nt.notify_content
+        	,nt.notifyCD
+			
+          from tb_notify nt
+               inner join tb_userinfo ui on ui.user_no = nt.user_no
+                  
+		<where>
+		 <if test="(date != null) and (!date.equals(''))">
+		    and re.rev_date = #{date}
+		</if> 
+		<if test="(name != null) and (!name.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{name}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and nt.notify_title LIKE CONCAT('%', #{notify_title}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{name}, '%')
+						       or nt.notify_title LIKE CONCAT('%', #{notify_title}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where>		
+		ORDER BY nt.notify_no DESC
+		LIMIT #{pageindex}, #{pageSize}
+		
+	</select>
+	
+	<!-- 목록 총 갯수 조회 -->
+	<select id="countalertlist" resultType="int">
+
+		select count(*)
+          from tb_notify nt
+               inner join tb_userinfo ui on ui.user_no = nt.user_no
+              
+		<where>
+		<!-- <if test="(date != null) and (!date.equals(''))">
+		    and re.rev_date = #{date}
+		</if> -->
+		<if test="(name != null) and (!name.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{name}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and nt.notify_title LIKE CONCAT('%', #{notify_title}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{name}, '%')
+						       or nt.notify_title LIKE CONCAT('%', #{notify_title}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where>		
+	</select>
+	
+	<select id="alertselectone" resultType="kr.happyjob.study.mypAlr.model.AlertModel">
+	       select ui.user_no
+	       		,ui.name
+	       		,nt.user_no2
+	       		,nt.notify_no
+	       		,nt.notify_title
+	       		,nt.notify_content
+	       		,nt.notifyCD
+	      
+          from tb_notify nt
+               inner join tb_userinfo ui on ui.user_no = nt.user_no  
+        where nt.notify_no =  #{notify_no}               
+	</select>
+	
+	<update id="alertupdate" >
+	    update tb_notify 
+	         set notify_title =  #{notify_title}   
+                , notify_content =  #{notify_content}   
+                <!-- , _uploaddate =  now() -->
+                <!-- , qna_uploader= #{name}   --> 
+                
+	     where  notify_no =  #{notify_no} 
+	</update>
+	
+	
+	<delete id="alertdelete">
+   		delete from tb_notify
+        where  notify_no =  #{notify_no}  
+	</delete>
+	
+
+			
+</mapper>

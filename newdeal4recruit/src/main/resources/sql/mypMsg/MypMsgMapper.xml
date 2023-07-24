@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.mypMsg.dao.MypMsgDao">
+
+	<!--  목록 조회 -->
+	<select id="messagelist" resultType="kr.happyjob.study.mypMsg.model.MessageModel">
+			      
+		       select msg_no
+		       	,ui.loginID 
+		       	,ms.msg_date
+		       	,ms.msg_title
+		       	,ms.msg_content
+		       	,ms.msg_sendID
+		       	,ms.msg_receiveID 
+		       	
+		         from tb_msg ms
+		              inner join tb_userinfo ui on ui.loginID = ms.loginID
+		         
+		         where ms.msg_sendID= #{loginID}
+		         	<!-- and ms.msg_receiveID= #{sendID}	 -->
+		         		
+		         		
+		             
+		                 
+	 		 <where>
+		 	 
+		
+			<!-- <if test="(date != null) and (!date.equals(''))">
+			    and ms.msg_date = #{date}
+			</if>  --> 
+			
+			<if test="(name != null) and (!name.equals(''))">
+					<choose>
+						<when
+							test="searchKey eq 'writer'.toString()">
+							and ui.loginID Like CONCAT('%', #{loginID}, '%')
+						</when>
+						<when
+							test="searchKey eq 'title'.toString()">
+							and ms.msg_title LIKE CONCAT('%', #{msg_title}, '%')
+						</when>
+						<otherwise>
+							 and (   and ui.loginID Like CONCAT('%', #{loginID}, '%')
+							       or ms.msg_title LIKE CONCAT('%', #{msg_title}, '%')
+							       )
+						</otherwise>
+					</choose>
+				</if>		
+			</where> 		 
+			<!-- ORDER BY ms.msg_no  -->
+			ORDER BY ms.msg_no DESC
+			LIMIT #{pageindex}, #{pageSize}
+			
+	</select>
+	
+	<!-- 목록 총 갯수 조회 -->
+		<select id="countmessagelist" resultType="int">
+		
+			select count(*)
+		         from tb_msg ms
+		              inner join tb_userinfo ui on ui.loginID = ms.loginID
+		             
+			<where>
+			<if test="(date != null) and (!date.equals(''))">
+			   and ms.msg_date = #{date}
+			</if> 
+			<if test="(name != null) and (!name.equals(''))">
+					<choose>
+						<when
+							test="searchKey eq 'writer'.toString()">
+							and ui.loginID Like CONCAT('%', #{loginID}, '%')
+						</when>
+						<when
+							test="searchKey eq 'title'.toString()">
+							and ms.msg_title LIKE CONCAT('%', #{msg_title}, '%')
+						</when>
+						<otherwise>
+							 and (   ui.loginID Like CONCAT('%', #{loginID}, '%')
+							       or ms.msg_title LIKE CONCAT('%', #{msg_title}, '%')
+							       )
+						</otherwise>
+					</choose>
+				</if>		
+			</where>		
+		</select>
+	
+	
+	<!-- 쪽지 하나 선택 -->
+	<select id="messageselectone" resultType="kr.happyjob.study.mypMsg.model.MessageModel">
+	       select msg_no
+			       	,ms.msg_date
+			       	,ms.msg_title
+			       	,ms.msg_content
+			       	,ui.loginID 
+			       	,ms.msg_sendID
+			       	,ms.msg_receiveID 
+	      
+	        from tb_msg ms
+	              inner join tb_userinfo ui on ui.loginID = ms.loginID  
+	       where msg_no =  #{msg_no}               
+	</select> 
+	
+
+	 <insert id="messageinsert">
+	    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+            select ifnull(max(msg_no),0) + 1 from tb_msg
+        </selectKey>   
+	    insert into tb_msg
+	             (
+	             	msg_no
+	             	,loginID
+	             	,msg_date
+	             	,msg_sendID
+	               ,msg_title
+                   ,msg_content
+                   ,msg_receiveID
+	             )
+	             
+	    values (	
+	    			#{no}
+	    			,#{loginID}
+	    			,now()
+	    			,(select loginID from tb_userinfo where loginID=#{loginID})	
+	               ,#{msg_title} 
+	               ,#{msg_content}
+	               ,'admin'
+	    )
+	    
+	   
+	</insert> 
+	
+	<!-- <update id="messageupdate" >
+	    update tb_msg 
+	         set msg_title =  #{msg_title}   
+                , msg_content =  #{msg_content}   
+               
+           where  msg_no =  #{msg_no}
+	</update> -->
+	
+	
+	
+	<delete id="messagedelete">
+   		delete from tb_msg
+        where  msg_no =  #{msg_no}  
+	</delete>
+	
+	
+ 	<!-- 	쪽지보내기	kr.happyjob.study.mypMsg.model.MessageModel	 --> 
+	
+	<insert id="msgsenderinfo" parameterType="int" >
+    <selectKey  keyProperty="msg_no" resultType="int" order="BEFORE">
+            select ifnull(max(msg_no),0) + 1 from tb_msg
+       </selectKey>
+		insert into tb_msg
+					(
+					msg_no
+					,loginID
+					,msg_title
+					,msg_content
+					,msg_sendID
+					,msg_receiveID
+					
+					)
+		values (
+				#{msg_no}
+				,#{loginID} 
+				,#{msg_title}
+				,#{msg_content}
+				,(select loginID from tb_userinfo where loginID= #{loginID})
+				,#{msg_receiveID}
+				
+				)
+
+	</insert>   
+	
+		
+</mapper>

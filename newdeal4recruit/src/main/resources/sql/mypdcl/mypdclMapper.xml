@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- <if test="user_type eq A">
+</if> -->
+	               
+<mapper namespace="kr.happyjob.study.mypdcl.dao.mypdclDao">
+
+
+
+	<!--  목록 조회 -->
+	<select id="declarelist" resultType="kr.happyjob.study.mypdcl.model.mypdclModel">
+		/*kr.happyjob.study.mypdcl.dao.mypdclDao.declarelist*/
+        select dc.declare_no
+               ,de_declare.detail_name AS declare_name
+        	   ,dc.loginID
+        	   ,dc.report_no
+        	   ,dc.declare_date
+        	   ,dc.declare_title
+        	   ,de_report.detail_name AS report_name
+        	   
+        			
+ 		
+              <!-- ,fi.file_name
+              ,fi.logic_path
+              ,fi.physic_path
+              ,fi.file_size
+              ,fi.exten
+              ,ui.name -->
+              
+          from tb_declare dc
+          INNER JOIN tb_detail_code de_declare ON de_declare.detail_code = dc.declare_CD AND de_declare.group_code = 'declareCD'
+		  INNER JOIN tb_detail_code de_report ON de_report.detail_code = dc.report_CD AND de_report.group_code = 'reportCD'
+          
+               <!-- left outer join tb_file fi on fi.file_no = nt.file_no -->
+           <!-- and dc.declare_divider = 'A' -->
+		 <where>
+			<if	test="userType != 'A'.toString()">
+			    and dc.loginID = #{loginid}
+			</if>
+			    
+		   <if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and dc.declare_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					
+				</choose>
+			</if>		
+			    
+			    
+
+			
+		
+				
+ 		</where>
+ 		 
+		ORDER BY dc.declare_date DESC
+		
+		LIMIT #{pageindex}, #{pageSize}
+		
+	</select>
+	
+	<!-- 목록 총 갯수 조회 -->
+	<select id="countdeclarelist" resultType="int">
+		/*kr.happyjob.study.mngNot.dao.mypdclDao.countdeclarelist*/
+		select count(*)
+          from tb_declare dc
+          <where>
+			<if	test="userType != 'A'.toString()">
+			    and dc.loginID = #{loginid}
+			</if>
+          </where>     
+           
+           <!--     inner join tb_userinfo ui on ui.loginID = dc.loginID
+               left outer join tb_file fi on fi.file_no = dc.file_no       
+		<where>
+		<if test="(delyn != null) and (!delyn.equals(''))">
+		    and nt.notice_del_yn = #{delyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{sname}, '%')
+						       or nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where>		 -->
+	</select>
+	 
+	<select id="declareselectone" resultType="kr.happyjob.study.mypdcl.model.mypdclModel">
+	         select dc.declare_no
+        	   ,dc.loginID
+        	   ,dc.report_no
+        	   ,dc.declare_date
+        	   ,dc.declare_title
+        	   
+        	   
+              
+              <!-- ,fi.file_name
+              ,fi.logic_path
+              ,fi.physic_path
+              ,fi.file_size
+              ,fi.exten
+              ,ui.name -->
+              
+          from tb_declare dc
+               <!-- left outer join tb_file fi on fi.file_no = nt.file_no -->
+          where declare_no = #{declare_no} 
+               <!-- and dc.declare_divider = 'A' -->              
+	</select>
+	
+	<insert id="declareNewinsert">
+	    <selectKey resultType="int" keyProperty="dclno" order="BEFORE">
+            select ifnull(max(declare_no),0) + 1 from tb_declare
+        </selectKey>   
+	    
+	    insert into tb_declare 
+              (
+                  declare_no
+	              , loginID
+                  , declare_CD
+                  , report_no
+                  , declare_date
+                  , declare_title
+                  , report_CD
+	             )
+	    values (
+	               #{dclno}
+	               ,#{loginid}
+	               ,#{declare_CD}
+	               ,(select corecruit_no FROM tb_corecruit where tb_corecruit.corecruit_no = #{report_no})
+	               ,curdate()
+	               ,#{declare_title}
+	               ,#{report_CD}
+	               )
+	    
+	    
+	    
+	</insert>
+	
+	<update id="mypdclupdate">
+	    update tb_declare
+	         set declare_title =  #{declare_title}   
+                , declare_content =  #{declare_content}   
+                , declare_date =  date_format(now(),'%Y-%m-%d')      
+	     where  declare_no =  #{declare_no}  
+	</update>
+	
+	<update id="declaredelete">
+	   update tb_notice
+	         set notice_del_yn =  'Y'
+	     where  notice_no =  #{notice_no}  
+	</update>
+	
+	<delete id="mypdcldelete">
+	    delete from tb_declare
+	    where  declare_no =  #{declare_no}  
+	</delete>
+	
+	
+	<update id="declareRefresh">
+
+	update tb_userinfo
+ 	set user_deccnt = (
+                      select count(*)
+                        from (
+                               select ci.loginID    
+                                 from tb_declare dc
+                                      inner join tb_corecruit ci on ci.corecruit_no = dc.report_no
+                                where dc.declare_CD = 'A'
+                                  and ci.loginID = #{declared_ID}
+                               union all
+                               select cm.loginID
+                                 from tb_declare dc 
+                                      inner join tb_comm cm on cm.comm_no = dc.report_no
+                                where dc.declare_CD = 'B' 
+                                   and cm.loginID = #{declared_ID}
+                               union all
+                               select qa.loginID    
+                                 from tb_declare dc 
+                                      inner join tb_qna qa on qa.qna_no = dc.report_no
+                                where dc.declare_CD = 'C'
+                                   and qa.loginID = #{declared_ID}
+                               union all
+                               select rv.loginID
+                                 from tb_declare dc 
+                                      inner join tb_rev rv on rv.rev_no = dc.report_no
+                                where dc.declare_CD = 'D'
+                                   and rv.loginID = #{declared_ID}
+                              ) pp
+                   )
+	where loginID = #{declared_ID}
+	</update>
+		<!-- 
+		update tb_userinfo
+		 	set user_deccnt = (
+		                      select count(*)
+		                        from (
+		                               select ci.loginID    
+		                                 from tb_declare dc
+		                                      inner join tb_corecruit ci on ci.corecruit_no = dc.report_no
+		                                where dc.declare_CD = 'A'
+		                                  and ci.loginID = #{declared_ID}
+		                               union all
+		                               select cm.loginID
+		                                 from tb_declare dc 
+		                                      inner join tb_comm cm on cm.comm_no = dc.report_no
+		                                where dc.declare_CD = 'B' 
+		                                   and cm.loginID = #{declared_ID}
+		                               union all
+		                               select qa.loginID    
+		                                 from tb_declare dc 
+		                                      inner join tb_qna qa on qa.qna_no = dc.report_no
+		                                where dc.declare_CD = 'C'
+		                                   and qa.loginID = #{declared_ID}
+		                               union all
+		                               select rv.loginID
+		                                 from tb_declare dc 
+		                                      inner join tb_rev rv on rv.rev_no = dc.report_no
+		                                where dc.declare_CD = 'D'
+		                                   and rv.loginID = #{declared_ID}
+		                              ) pp
+		                   )
+			where loginID = #{declared_ID} -->
+			
+    
+    
+     
+    
+     <!--  -->
+    <select id="declareBlackNullcheck" resultType="int">
+    	select count(ui.loginID)
+  		from tb_userinfo ui 
+  		where ui.user_deccnt > 5 and ui.loginID = #{declared_ID} 
+		           
+   	</select>                     
+     
+    
+     
+    <insert id="declareBlack">
+    <selectKey resultType="int" keyProperty="blkno" order="BEFORE">
+            select ifnull(max(blacklist_number),0) + 1 from tb_blacklist bl
+    </selectKey>   
+	     
+			insert into tb_blacklist (
+				       blacklist_number
+				      ,loginID				      
+				      ,blacklist_date
+				      ,blacklist_usertype
+				    ) 
+				    
+				    SELECT 
+	                   #{blkno}
+	                   ,(select loginID from tb_userinfo ui 
+		               		 where ui.user_deccnt > 5 and ui.loginID = #{declared_ID})
+		               ,curdate()
+		               ,(select user_type from tb_userinfo ui 
+		               		 where ui.user_deccnt > 5 and ui.loginID = #{declared_ID})            
+				    FROM dual
+				    where NOT EXISTS (select tb_blacklist.loginID 
+										        from tb_blacklist  
+										        where tb_blacklist.loginID = #{declared_ID}
+										        ) 
+	
+    
+    </insert> 
+				    
+					
+				
+	<update id="declareblackUsertype">
+
+	UPDATE tb_userinfo AS ui
+	INNER JOIN tb_blacklist AS bl ON ui.loginID = bl.loginID
+	SET ui.user_type = 'D';
+
+	
+	</update>	    
+	 
+	    
+	    
+    
+    
+    
+    
+   
+	
+	
+	<insert id="fileinsert">
+	    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+            select ifnull(max(file_no),0) + 1 from tb_file
+        </selectKey>  
+	    insert into tb_file
+	         (
+	             file_no
+               , file_name
+               , logic_path
+               , physic_path
+               , file_size
+               , exten
+	         ) values (
+	            #{no}
+	           ,#{filereturn.file_nm}   
+	           ,#{filereturn.vrfile_loc}   
+	           ,#{filereturn.file_loc}   
+	           ,#{filereturn.file_size}   
+	           ,#{filereturn.fileExtension}  
+	         )
+	</insert>
+	
+	<delete id="deletefileinfo">
+	         delete from tb_file
+             where file_no = ( 
+                                       select file_no 
+                                        from tb_notice
+                                      where notice_no = #{notice_no} 
+                                   )
+	</delete>
+	
+	<update id="noticeupdatefile">
+	      update tb_notice
+	         set notice_title =  #{file_notice_title}   
+                , notice_cont =  #{file_notice_cont}   
+                , notice_date =  date_format(now(),'%Y-%m-%d')      
+                <if test="fileexist eq 'Y'.toString()">
+                , file_no = (select ifnull(max(file_no),0)  from tb_file)
+                </if>
+                <if test="fileexist eq 'N'.toString()">
+                , file_no = 0
+                </if>
+	     where  notice_no =  #{notice_no}  
+	</update>
+	
+	<delete id="noticedeletefile">
+	     delete from tb_notice
+	     where  notice_no =  #{notice_no}  
+	</delete>
+	
+	
+	
+</mapper>
+

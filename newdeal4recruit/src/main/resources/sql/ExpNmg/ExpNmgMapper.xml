@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.expnmg.dao.ExpNmgDao">
+
+	<!--  목록 조회 -->
+	<select id="noticelist" resultType="kr.happyjob.study.expnmg.model.ExpNmgModel">
+		/*kr.happyjob.study.expnmg.dao.ExpNmgDao.noticelist*/
+		select nt.notice_no
+			  ,nt.att_no
+			  ,nt.notice_del_yn
+			  ,nt.notice_title
+			  ,nt.notice_content
+			  ,nt.notice_uploaddate
+			  ,nt.notice_uploader
+		      ,at.att_no
+		      ,at.att_name
+		      ,at.att_phypath
+		      ,at.att_logpath
+		      ,at.att_size
+		      ,at.att_extname
+		from tb_notice nt
+        	left outer join tb_att at on at.att_no = nt.att_no
+	
+		<where>
+		<if test="(delyn != null) and (!delyn.equals(''))">
+			and nt.notice_del_yn = #{delyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and nt.notice_uploader Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						and ( nt.notice_uploader Like CONCAT('%', #{sname}, '%')
+						   or nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+							)
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		ORDER BY nt.notice_no DESC
+		LIMIT #{pageindex}, #{pageSize}
+		
+	</select>
+	
+	<!-- 목록 총 갯수 조회 -->
+	<select id="countnoticelist" resultType="int">
+		/*kr.happyjob.study.expnmg.dao.ExpNmgDao.countnoticelist*/	
+		select count(*)
+			from tb_notice nt
+				left outer join tb_att at on at.att_no = nt.att_no
+		<where>
+		<if test="(delyn != null) and (!delyn.equals(''))">
+			and nt.notice_del_yn = #{delyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and nt.notice_uploader Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						and ( nt.notice_uploader Like CONCAT('%', #{sname}, '%')
+						   or nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+							)
+					</otherwise>
+				</choose>
+			</if>
+		</where>		
+	</select>
+
+	<select id="noticeselectone" resultType="kr.happyjob.study.expnmg.model.ExpNmgModel">
+		select nt.notice_no
+			  ,nt.att_no
+			  ,nt.notice_del_yn
+			  ,nt.notice_title
+			  ,nt.notice_content
+			  ,nt.notice_uploaddate
+			  ,nt.notice_uploader
+		      ,at.att_no
+		      ,at.att_name
+		      ,at.att_phypath
+		      ,at.att_logpath
+		      ,at.att_size
+		      ,at.att_extname
+		from tb_notice nt
+        	left outer join tb_att at on at.att_no = nt.att_no
+	   where nt.notice_no = #{notice_no}
+	</select>
+	
+	<insert id="noticeinsert">
+		<selectKey resultType="int" keyProperty="no" order="BEFORE">
+            select ifnull(max(notice_no),0) + 1 from tb_notice
+        </selectKey>  
+        insert into tb_notice
+        		(	
+				    notice_no
+				  , att_no
+				  , notice_title
+				  , notice_content
+				  , notice_uploaddate
+				  , notice_uploader
+        		)
+        values (
+					#{no}
+        			,(select ifnull(max(att_no),0) from tb_att)       			     			
+        			<if test="fileprc eq 'N'.toString()">
+        			,#{notice_title}
+        			</if>
+        			<if test="fileprc eq 'Y'.toString()">
+        			,#{file_notice_title}
+        			</if>
+        			<if test="fileprc eq 'N'.toString()">
+        			,#{notice_content}
+        			</if>
+        			<if test="fileprc eq 'Y'.toString()">
+        			,#{file_notice_content}
+        			</if>
+        			,now()
+        			,(select name from tb_userinfo where loginId = #{loginID}) 
+        )		
+	</insert>
+	
+	<update id="noticeupdate">
+		update tb_notice
+			set notice_title = 	  #{notice_title}
+			,	notice_content  = #{notice_content}
+			,	notice_uploaddate  = now()
+		where notice_no = #{notice_no}
+	</update>
+
+	<update id="noticedelete">
+		update tb_notice
+			  set notice_del_yn = 'Y'
+		  where   notice_no = #{notice_no}
+	</update>
+	
+<!-- 	<delete id="noticedeletereal">
+		delete from tb_notice
+		where  notice_no = #{notice_no}
+	</delete> -->
+	
+	<insert id="fileinsert">
+		<selectKey resultType="int" keyProperty="no" order="BEFORE">
+			select ifnull(max(att_no),0) + 1 from tb_att
+		</selectKey>
+		insert into tb_att
+			(
+				att_no
+			,	att_name
+			,	att_logpath
+			,	att_phypath
+			,	att_size
+			, 	att_extname
+			) values (
+				#{no}
+	           ,#{filereturn.file_nm}   
+	           ,#{filereturn.vrfile_loc}   
+	           ,#{filereturn.file_loc}   
+	           ,#{filereturn.file_size}   
+	           ,#{filereturn.fileExtension}  
+			)
+	</insert>
+
+	<delete id="deletefileinfo">
+			delete from tb_att
+			where att_no = (
+								select att_no
+								from tb_notice
+								where att_no = #{att_no}
+						)	
+	</delete>
+	
+	<update id="noticeupdatefile">
+		update tb_notice
+			set notice_title   = #{file_notice_title}
+			   ,notice_content = #{file_notice_content}
+			   ,notice_uploaddate = now()
+			   <if test="fileexist eq 'Y'.toString()">
+			   , att_no = (select ifnull(max(att_no)),0 from tb_att)
+			   </if>
+			   <if test="fileexist eq 'N'.toString()">
+			   , att_no = 0
+			   </if>
+		where  att_no = #{att_no}			   
+	</update>
+	
+	<delete id="noticedeletefile">
+		delete from tb_notice
+		where notice_no = #{notice_no}
+	</delete>
+
+
+
+<select id="noticeylist" resultType="kr.happyjob.study.expnmg.model.ExpNmgModel">
+    <!-- kr.happyjob.study.expnmg.dao.ExpNmgDao.noticeylist -->
+    select nt.notice_no
+          , nt.att_no
+          , nt.notice_del_yn
+          , nt.notice_title
+          , nt.notice_content
+          , nt.notice_uploaddate
+          , nt.notice_uploader
+          , at.att_no
+          , at.att_name
+          , at.att_phypath
+          , at.att_logpath
+          , at.att_size
+          , at.att_extname
+    from tb_notice nt
+    left outer join tb_att at on at.att_no = nt.att_no
+    <where>
+        <if test="delyn != null and !delyn.isEmpty()">
+            and nt.notice_del_yn = #{delyn}
+        </if>
+        <if test="sname != null and !sname.isEmpty()">
+            <choose>
+                <when test="searchKey == 'writer'">
+                    and nt.notice_uploader like concat('%', #{sname}, '%')
+                </when>
+                <when test="searchKey == 'title'">
+                    and nt.notice_title like concat('%', #{sname}, '%')
+                </when>
+                <otherwise>
+                    and (nt.notice_uploader like concat('%', #{sname}, '%')
+                         or nt.notice_title like concat('%', #{sname}, '%')
+                    )
+                </otherwise>
+            </choose>
+        </if>
+        <if test="delyn != null and !delyn.isEmpty()">
+            and nt.notice_del_yn = 'Y'
+        </if>
+    </where>
+    ORDER BY nt.notice_no DESC
+<!--     LIMIT #{pageindex}, #{pageSize} -->
+</select>
+
+
+
+
+
+</mapper>

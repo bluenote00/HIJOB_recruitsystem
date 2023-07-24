@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+	<mapper namespace="kr.happyjob.study.myppage.dao.MyppageDao">
+	
+	  
+		<!-- ＊＊＊＊＊＊＊＊＊＊＊＊취준생 구역 (P_myppage.jsp)＊＊＊＊＊＊＊＊＊＊＊＊＊ -->
+	
+	<select id="resumelist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+	
+		SELECT
+    		re.resume_no,
+   		 	re.resume_name,
+   		 	re.resume_openunopen,
+   		 	re.skill1,
+   		 	dc.detail_name as skill1name,
+			re.skill2,
+			dc2.detail_name as skill2name,
+			re.skill3,
+			dc3.detail_name as skill3name
+		FROM
+    		tb_resume re
+    		inner join tb_detail_code dc on dc.detail_code = re.skill1 and dc.group_code = 'stackCD'
+    		inner join tb_detail_code dc2 on dc2.detail_code = re.skill2 and dc2.group_code = 'stackCD'
+    		inner join tb_detail_code dc3 on dc3.detail_code = re.skill3 and dc3.group_code = 'stackCD'
+    		inner join tb_userinfo ui on re.loginID = ui.loginID
+		WHERE
+    		re.loginID = ui.loginID 		
+    		<if test="(dtlcombo1 != null) and (!dtlcombo1.equals(''))">
+    		and (
+    		         re.skill1 = #{dtlcombo1}
+    		      or re.skill2 = #{dtlcombo1}  
+    		      or re.skill3 = #{dtlcombo1}  
+    		    )
+    		</if>
+		ORDER BY
+    		re.resume_no DESC
+
+	
+	</select>
+	
+
+		<!-- 취준생_지원한 횟수 불러오기 -->
+	<select id="Papplycompanycount" resultType="int">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Papplycompanycount*/
+			
+				SELECT count(*)
+	 		  	  FROM tb_applinfo
+			    WHERE loginID = #{loginID};
+	</select>
+
+	
+			<!-- 취준생_서류통과 횟수 불러오기 -->
+	<select id="Papplypaperpasscount" resultType="int">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Papplypaperpasscount*/
+			
+        		SELECT count(*)
+	 		  	  FROM tb_applinfo
+			    WHERE loginID = #{loginID}
+          			 AND applyCD = 2;
+	</select>
+
+	
+			<!-- 취준생_최종합격 횟수 불러오기 -->
+		<select id="Papplypasscount" resultType="int">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Papplypasscount*/
+			
+        		SELECT count(*)
+	 		  	  FROM tb_applinfo
+			    WHERE loginID = #{loginID}
+          			 AND applyCD = 3;
+	</select>
+	
+				<!-- 취준생_불합격 횟수 불러오기 -->
+		<select id="Papplyfailcount" resultType="int">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Papplyfailcount*/
+			
+        		SELECT count(*)
+	 		  	  FROM tb_applinfo
+			    WHERE loginID = #{loginID}
+          			 AND applyCD = 4;
+	</select>
+	
+	
+			<!-- 취준생_지원한 회사 공고 목록 불러오기 -->
+	<select id="Papplycompanylist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Papplycompanylist*/
+			
+			select ap.appli_no,
+      		   		   ap.loginID,
+      			 	   ap.corecruit_no,
+      				   cr.corecruit_title,
+      				   ui.user_coname,
+      				   ap.applyCD,
+      				   DATE_FORMAT(ap.appli_procdate,'%Y-%m-%d') as appli_procdate
+	 		   from tb_applinfo ap
+	INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+	INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+			where ap.loginID = #{loginID}
+	ORDER BY ap.appli_no DESC;
+
+	</select>
+	
+			<!-- 취준생_서류통과 회사 공고 목록 불러오기 -->
+	<select id="Papplypapercompanylist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Papplycompanylist*/
+			
+			select ap.appli_no,
+      		   		   ap.loginID,
+      			 	   ap.corecruit_no,
+      				   cr.corecruit_title,
+      				   ui.user_coname,
+      				   ap.applyCD,
+      				   DATE_FORMAT(ap.appli_procdate,'%Y-%m-%d') as appli_procdate
+	 		   from tb_applinfo ap
+	INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+	INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+			where ap.loginID = #{loginID}
+					   and ap.applyCD = 2
+	ORDER BY ap.appli_no DESC;
+	</select>
+	
+				<!-- 취준생_최종합격 회사 공고 목록 불러오기 -->
+	<select id="Papplypasscompanylist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Papplycompanylist*/
+			
+			select ap.appli_no,
+      		   		   ap.loginID,
+      			 	   ap.corecruit_no,
+      				   cr.corecruit_title,
+      				   ui.user_coname,
+      				   ap.applyCD,
+      				   DATE_FORMAT(ap.appli_procdate,'%Y-%m-%d') as appli_procdate
+	 		   from tb_applinfo ap
+	INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+	INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+			where ap.loginID = #{loginID}
+					   and ap.applyCD = 3
+	ORDER BY ap.appli_no DESC;
+	</select>
+	
+					<!-- 취준생_불합격 회사 공고 목록 불러오기 -->
+	<select id="Papplyfailcompanylist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Papplycompanylist*/
+			
+			select ap.appli_no,
+      		   		   ap.loginID,
+      			 	   ap.corecruit_no,
+      				   cr.corecruit_title,
+      				   ui.user_coname,
+      				   ap.applyCD,
+      				   DATE_FORMAT(ap.appli_procdate,'%Y-%m-%d') as appli_procdate
+	 		   from tb_applinfo ap
+	INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+	INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+			where ap.loginID = #{loginID}
+					   and ap.applyCD = 4
+	ORDER BY ap.appli_no DESC;
+	</select>
+	
+	
+	
+	
+				<!-- *************** 채용 기업 구역 (C_myppage.jsp) *************** -->
+
+
+	<!-- 기업_지원자 수 불러오기 -->
+	<select id="Capplicantcount" resultType="int">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantcount*/
+			
+				SELECT COUNT(*)
+				 FROM tb_applinfo ap
+		INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+  		INNER JOIN tb_resume rs ON rs.loginID = ap.loginID
+			   WHERE cr.loginID =  #{loginID}
+			   		AND ap.applyCD = 1
+           AND rs.resume_openunopen= 'Y';
+			   
+	</select>
+	
+
+		<!-- 기업_지원자 리스트 불러오기 -->
+	<select id="Capplicantlist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantlist*/
+			
+				SELECT cr.corecruit_no
+							,cr.corecruit_title
+							,ap.appli_no
+							,ui.name
+							,ap.loginID
+							,ap.applyCD
+             			    ,rs.resume_no
+				FROM tb_applinfo ap
+		INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+		INNER JOIN tb_userinfo ui ON ui.loginID = ap.loginID
+   		 INNER JOIN tb_resume rs ON rs.loginID = ap.loginID
+			   WHERE cr.loginID = #{loginID}
+			  	 AND ap.applyCD = 1
+           AND rs.resume_openunopen= 'Y';
+			   
+	</select>
+	
+			<!-- 기업_서류통과 수 불러오기 -->
+	<select id="Capplicantpappercount" resultType="int">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantcount*/
+			
+				SELECT COUNT(*)
+				 FROM tb_applinfo ap
+		INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+  		INNER JOIN tb_resume rs ON rs.loginID = ap.loginID
+			   WHERE cr.loginID =  #{loginID}
+			   		AND ap.applyCD = 2
+           AND rs.resume_openunopen= 'Y';
+			   
+	</select>
+	
+				<!-- 기업_서류통과 리스트 불러오기 -->
+	<select id="Capplicantpapperlist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantpapperlist*/
+			
+				SELECT cr.corecruit_no
+							,cr.corecruit_title
+							,ap.appli_no
+							,ui.name
+							,ap.loginID
+							,ap.applyCD
+             			    ,rs.resume_no
+				FROM tb_applinfo ap
+		INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+		INNER JOIN tb_userinfo ui ON ui.loginID = ap.loginID
+   		 INNER JOIN tb_resume rs ON rs.loginID = ap.loginID
+			   WHERE cr.loginID = #{loginID}
+			  	 AND ap.applyCD = 2
+           AND rs.resume_openunopen= 'Y';
+	</select>
+
+
+	
+			<!-- 기업_합격자 수 불러오기 -->
+	<select id="Capplicantpasscount" resultType="int">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantpasscount*/
+			
+				SELECT COUNT(*)
+				 FROM tb_applinfo ap
+		INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+  		INNER JOIN tb_resume rs ON rs.loginID = ap.loginID
+			   WHERE cr.loginID =  #{loginID}
+			   		AND ap.applyCD = 3
+           AND rs.resume_openunopen= 'Y';
+			   
+	</select>
+	
+					<!-- 기업_합격자 리스트 불러오기 -->
+	<select id="Capplicantpasslist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantpasslist*/
+			
+				SELECT cr.corecruit_no
+							,cr.corecruit_title
+							,ap.appli_no
+							,ui.name
+							,ap.loginID
+							,ap.applyCD
+             			    ,rs.resume_no
+				FROM tb_applinfo ap
+		INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+		INNER JOIN tb_userinfo ui ON ui.loginID = ap.loginID
+   		 INNER JOIN tb_resume rs ON rs.loginID = ap.loginID
+			   WHERE cr.loginID = #{loginID}
+			  	 AND ap.applyCD = 3
+           AND rs.resume_openunopen= 'Y';
+	</select>
+	
+				<!-- 기업_불합격 수 불러오기 -->
+	<select id="Capplicantfailcount" resultType="int">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantfailcount*/
+			
+				SELECT COUNT(*)
+				 FROM tb_applinfo ap
+		INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+  		INNER JOIN tb_resume rs ON rs.loginID = ap.loginID
+			   WHERE cr.loginID =  #{loginID}
+			   		AND ap.applyCD = 4
+           AND rs.resume_openunopen= 'Y';
+			   
+	</select>
+	
+					<!-- 기업_불합격 리스트 불러오기 -->
+	<select id="Capplicantfaillist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantfaillist*/
+			
+				SELECT cr.corecruit_no
+							,cr.corecruit_title
+							,ap.appli_no
+							,ui.name
+							,ap.loginID
+							,ap.applyCD
+             			    ,rs.resume_no
+				FROM tb_applinfo ap
+		INNER JOIN tb_corecruit cr ON cr.corecruit_no = ap.corecruit_no
+		INNER JOIN tb_userinfo ui ON ui.loginID = ap.loginID
+   		 INNER JOIN tb_resume rs ON rs.loginID = ap.loginID
+			   WHERE cr.loginID = #{loginID}
+			  	 AND ap.applyCD = 4
+           AND rs.resume_openunopen= 'Y';
+	</select>
+	
+
+				<!--  기업_지원자 서류합격 버튼 -->
+	<update id="Capplicantpaperpassbutton">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantpaperpassbutton*/
+			
+            UPDATE tb_applinfo 
+              	   SET applyCD = 2 
+             WHERE appli_no = #{appli_no}
+             	   and corecruit_no = #{corecruit_no}
+             	   and loginID = #{loginID};
+                  
+	</update>
+	
+				<!--	기업_지원자 최종합격 버튼 -->
+	<update id="Capplicantallpassbutton">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantallpassbutton*/
+			
+            UPDATE tb_applinfo 
+              	   SET applyCD = 3 
+             WHERE appli_no = #{appli_no}
+             	   and corecruit_no = #{corecruit_no}
+             	   and loginID = #{loginID};
+	</update>
+	
+				<!-- 기업_지원자 불합격 버튼  -->
+	<update id="Capplicantfailbutton">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantallpassbutton*/
+			
+            UPDATE tb_applinfo 
+              	   SET applyCD = 4 
+             WHERE appli_no = #{appli_no}
+             	   and corecruit_no = #{corecruit_no}
+             	   and loginID = #{loginID};
+	</update>
+
+		
+		<!-- 지원자 정보 -->
+	<select id="applyinfo" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+			/*kr.happyjob.study.myppage.dto.MyppageDto.Capplicantfaillist*/
+		
+		SELECT appli_no
+      				,loginID
+      				,corecruit_no
+ 		 	FROM tb_applinfo
+ 		 WHERE appli_no = #{appli_no};
+ 		</select>
+ 		
+ 		
+ 		
+	 <!--  기업 자신이 쓴 공고 조회 -->
+	<select id="adverlist_write" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+		/*kr.happyjob.study.Myppage.dto.MyppageDto*/
+		
+			SELECT cr.corecruit_no,
+                   cr.corecruit_title,
+                    cr.user_no,
+                    cr.loginID,
+                    ui.name,
+                    ui.user_businesstype,
+                    ui.user_coname,
+                    ui.user_rpname,
+                    ui.user_regdate,
+                    cr.corecruit_strdate,
+                    cr.corecruit_enddate,
+                    cr.corecruit_address1,
+                    cr.corecruit_address2,
+                    ss.session_code,
+                   cr.city1_no,
+                   ct.detail_name as city1_name,
+                   cr.city2_no,
+                   cy.detail_name as city2_name,
+                    cr.att_no,
+                    at.att_name,
+                    at.att_phypath,
+                    at.att_logpath,
+                    at.att_size,
+                    at.att_extname,
+                    cr.like_yn
+         FROM tb_corecruit cr
+               INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+               INNER JOIN tb_session ss ON ss.session_code = cr.session_code
+               LEFT OUTER JOIN tb_detail_code ct ON ct.detail_code = cr.city1_no and ct.group_code = 'addressCD'
+               LEFT OUTER JOIN tb_detail_code cy ON cy.detail_code = cr.city2_no and cy.group_code = cr.city1_no
+               LEFT OUTER JOIN tb_att at ON at.att_no = cr.att_no
+                WHERE cr.loginID = #{loginID};
+      
+	</select>
+	
+	
+	<!--  한건 조회 + 스킬 따로 가져오기 -->
+	<select id="skillist" resultType="kr.happyjob.study.myppage.dto.MyppageDto">
+		/*kr.happyjob.study.Myppage.dto.MyppageDto.skillist*/
+		
+       	SELECT co.dtlcodeCD   
+      				,dc.detail_name
+  		 FROM tb_coskill co
+       				inner join tb_detail_code dc on dc.detail_code = co.dtlcodeCD  and group_code = 'dtlcodeCD'
+ 		where co.corecruit_no = #{corecruit_no};
+
+	</select>
+	
+ 		 
+</mapper>

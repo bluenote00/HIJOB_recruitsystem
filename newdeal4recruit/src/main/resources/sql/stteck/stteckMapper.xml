@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.stteck.dao.stteckDao">
+	 
+	<select id="selectCompanyPassuser" resultType="kr.happyjob.study.stteck.model.CompanyPassuserVO">
+	   
+	   select count(ap.appli_no) as appli_no, 
+		       ci.loginID,
+		       ui.user_coname
+		FROM tb_applinfo ap
+		inner join tb_corecruit ci on ci.corecruit_no = ap.corecruit_no
+		inner join tb_userinfo ui on ui.loginID = ci.loginID
+		where ap.applyCD = 3
+		group by ci.loginID  
+			   
+	   
+	</select>
+	
+	
+	
+	<select id="selectSessionApplyuser" resultType="kr.happyjob.study.stteck.model.SessionApplyuserVO">
+		
+					SELECT 
+					    SUM(applycnt) AS applycnt,
+					    session_code
+					FROM (
+					    SELECT COUNT(DISTINCT ap.loginID) AS applycnt, session_code
+					    FROM tb_applinfo ap
+					    INNER JOIN tb_userinfo ui ON ap.loginID = ui.loginID
+					    INNER JOIN tb_session s ON ap.appli_procdate BETWEEN s.session_evstrdate AND s.session_evenddate
+					    WHERE s.session_code IN (1,2)
+					    GROUP BY ap.loginID, session_code
+					) AS apss
+					GROUP BY session_code;
+		
+	</select>
+
+	 
+	<select id="selectSessionCompany" resultType="kr.happyjob.study.stteck.model.SessionCompanyVO">
+		
+		SELECT user_coname, SUM(cntcop) AS total_cntcop
+		FROM
+		(
+		    SELECT ss1.user_coname, ss1.cntcop
+		    FROM
+		    (
+		        SELECT COUNT(DISTINCT co.loginID) AS cntcop, co.loginID, ui.user_coname
+		        FROM tb_corecruit co
+		        INNER JOIN tb_userinfo ui ON co.loginID = ui.loginID
+		        WHERE co.corecruit_strdate BETWEEN (
+		                SELECT session_evstrdate
+		                FROM tb_session
+		                WHERE session_code = 1
+		            ) AND (
+		                SELECT session_evenddate
+		                FROM tb_session
+		                WHERE session_code = 1
+		            )
+		        GROUP BY co.loginID
+		    ) AS ss1
+		    GROUP BY ss1.user_coname
+		    
+		    UNION ALL
+		    
+		    SELECT ss2.user_coname, ss2.cntcop
+		    FROM
+		    (
+		        SELECT COUNT(DISTINCT co.loginID) AS cntcop, co.loginID, ui.user_coname
+		        FROM tb_corecruit co
+		        INNER JOIN tb_userinfo ui ON co.loginID = ui.loginID
+		        WHERE co.corecruit_strdate BETWEEN (
+		                SELECT session_evstrdate
+		                FROM tb_session
+		                WHERE session_code = 2
+		            ) AND (
+		                SELECT session_evenddate
+		                FROM tb_session
+		                WHERE session_code = 2
+		            )
+		        GROUP BY co.loginID
+		    ) AS ss2
+		) AS combined
+		GROUP BY user_coname;
+				
+				
+		 
+	</select>
+	 
+	 
+	 
+</mapper>

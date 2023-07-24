@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- <if test="user_type eq A">
+</if> -->
+	               
+<mapper namespace="kr.happyjob.study.mypqnal.dao.mypqnalDao">
+
+
+
+	<!--  목록 조회 -->
+	<select id="searchquestionlist" resultType="kr.happyjob.study.mypqnal.model.mypqnalModel">
+		/*kr.happyjob.study.mypqnal.dao.mypqnalDao.questionlist*/
+		select qa.qna_no
+        	   ,qa.loginID
+        	   ,qa.qna_content
+        	   ,qa.qna_uploaddate
+        	   ,qa.qna_uploader
+        	   ,qa.qna_title
+          from tb_qna qa
+          
+          where qa.loginID = #{loginID}
+          
+          
+          	<if test="(sname != null) and (!sname.equals('')) " >
+          	 	<choose>
+	          			<when 
+	          				test="searchKey eq 'title'.toString()">
+	          				and qa.qna_title LIKE CONCAT('%', #{sname}, '%')
+	          			</when>
+          			
+        		</choose>
+           	 </if>
+         
+          
+             
+
+		ORDER BY qa.qna_no DESC
+        
+		LIMIT #{pageindex}, #{pageSize}
+	
+	</select>	
+			<!-- <when 
+          				test="searchKey eq 'divide'.toString()">
+          				and qa.qna_title LIKE CONCAT('%', #{sname}, '%')
+          			</when> -->
+          			
+		
+		
+		
+	
+	<!-- 목록 총 갯수 조회 -->
+	<select id="countquestionlist" resultType="int">
+		/*kr.happyjob.study.mypqnal.dao.mypqnalDao.countquestionlist*/
+		select count(*)
+          from tb_qna qa
+          where qa.loginID = #{loginID}     
+           
+           <!--     inner join tb_userinfo ui on ui.loginID = dc.loginID
+               left outer join tb_file fi on fi.file_no = dc.file_no       
+		<where>
+		<if test="(delyn != null) and (!delyn.equals(''))">
+		    and nt.notice_del_yn = #{delyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{sname}, '%')
+						       or nt.notice_title LIKE CONCAT('%', #{sname}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where>		 -->
+	</select>
+	 
+	<select id="questionselectone" resultType="kr.happyjob.study.mypqnal.model.mypqnalModel">
+	        
+				select     qa.user_no
+				           ,qa.loginID
+				           ,qa.qna_content
+				           ,qa.qna_uploaddate
+				           ,qa.qna_uploader
+				           ,qa.qna_title
+				           ,qa.qna_no
+				        	   
+				              
+				          from tb_qna qa
+				               
+				          where qa.qna_no = #{qna_no}          
+	</select>
+	
+	<insert id="questioninsert">
+	    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+            select ifnull(max(notice_no),0) + 1 from tb_notice
+        </selectKey>   
+	    insert into tb_notice
+	             (
+	                notice_no
+                  , notice_del_yn
+                  , loginID
+                  , notice_title
+                  , notice_cont
+                  , notice_date
+                  , file_no
+	             )
+	    values (
+	                #{no} 
+	               ,'N'
+	               ,#{loginid} 
+	               <if test="fileprc eq 'N'.toString()">
+	               ,#{notice_title} 
+	               </if>
+	               <if test="fileprc eq 'Y'.toString()">
+	               ,#{file_notice_title} 
+	               </if>
+	               <if test="fileprc eq 'N'.toString()">
+	               ,#{notice_cont} 
+	               </if>
+	               <if test="fileprc eq 'Y'.toString()">
+	               ,#{file_notice_cont} 
+	               </if>
+	               ,now()
+	               <if test="(fileprc eq 'N'.toString()) or (fileexist eq 'N'.toString()) ">
+	               ,0
+	               </if>
+	               <if test="(fileprc eq 'Y'.toString()) and (fileexist eq 'Y'.toString())">
+	               ,(select ifnull(max(file_no),0)  from tb_file)
+	               </if>
+	    )
+	</insert>
+	
+	<update id="questionupdate">
+	    update tb_qna
+	         set qna_title =  #{qna_title}   
+                , qna_content =  #{qna_content}   
+                , qna_uploaddate =  now()      
+	     where  qna_no =  #{qna_no}  
+	</update>
+	
+	<update id="questiondeletebtn">
+	   update tb_notice
+	         set notice_del_yn =  'Y'
+	     where  notice_no =  #{notice_no}  
+	</update>
+	
+	<delete id="questiondelete">
+	    delete from tb_qna
+	    where  qna_no =  #{qna_no}  
+	</delete>
+	
+	<insert id="fileinsert">
+	    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+            select ifnull(max(file_no),0) + 1 from tb_file
+        </selectKey>  
+	    insert into tb_file
+	         (
+	             file_no
+               , file_name
+               , logic_path
+               , physic_path
+               , file_size
+               , exten
+	         ) values (
+	            #{no}
+	           ,#{filereturn.file_nm}   
+	           ,#{filereturn.vrfile_loc}   
+	           ,#{filereturn.file_loc}   
+	           ,#{filereturn.file_size}   
+	           ,#{filereturn.fileExtension}  
+	         )
+	</insert>
+	
+	<delete id="deletefileinfo">
+	         delete from tb_file
+             where file_no = ( 
+                                       select file_no 
+                                        from tb_notice
+                                      where notice_no = #{notice_no} 
+                                   )
+	</delete>
+	
+	<update id="noticeupdatefile">
+	      update tb_notice
+	         set notice_title =  #{file_notice_title}   
+                , notice_cont =  #{file_notice_cont}   
+                , notice_date =  now()      
+                <if test="fileexist eq 'Y'.toString()">
+                , file_no = (select ifnull(max(file_no),0)  from tb_file)
+                </if>
+                <if test="fileexist eq 'N'.toString()">
+                , file_no = 0
+                </if>
+	     where  notice_no =  #{notice_no}  
+	</update>
+	
+	<delete id="noticedeletefile">
+	     delete from tb_notice
+	     where  notice_no =  #{notice_no}  
+	</delete>
+	
+	
+	
+</mapper>
+

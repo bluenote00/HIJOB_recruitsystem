@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.myprmg.dao.MypRmgDao">
+
+  
+	 <!--  기업 리스트 최신순 조회 -->
+	<select id="adverlist" resultType="kr.happyjob.study.myprmg.dto.MypRmgDto">
+		/*kr.happyjob.study.myprmg.dto.MypRmgDto.adverlist*/
+		SELECT cr.corecruit_no,
+                   cr.corecruit_title,
+                    cr.user_no,
+                    cr.loginID,
+                    ui.name,
+                    ui.user_businesstype,
+                    ui.user_coname,
+                    ui.user_rpname,
+                    ui.user_regdate,
+                    cr.corecruit_strdate,
+                    cr.corecruit_enddate,
+                    cr.corecruit_address1,
+                    cr.corecruit_address2,
+                    ss.session_code,
+                   cr.city1_no,
+                   ct.detail_name as city1_name,
+                   cr.city2_no,
+                   cy.detail_name as city2_name,
+                    cr.att_no,
+                    at.att_name,
+                    at.att_phypath,
+                    at.att_logpath,
+                    at.att_size,
+                    at.att_extname,
+                    cr.like_yn,
+                    case when llk.cnt is null then 'N'
+                         else 'Y'
+                    end as userlikeyn     
+         FROM tb_corecruit cr
+               INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+               INNER JOIN tb_session ss ON ss.session_code = cr.session_code
+               LEFT OUTER JOIN tb_detail_code ct ON ct.detail_code = cr.city1_no and ct.group_code = 'addressCD'
+               LEFT OUTER JOIN tb_detail_code cy ON cy.detail_code = cr.city2_no and cy.group_code = cr.city1_no
+               LEFT OUTER JOIN tb_att at ON at.att_no = cr.att_no
+               LEFT OUTER JOIN (
+                                 select lk.corecruit_no
+                                        ,count(*) as cnt 
+                                   from tb_like lk
+                                  where lk.loginID = #{loginID}
+                                 group by lk.corecruit_no
+                                ) llk ON llk.corecruit_no = cr.corecruit_no
+                     <where>
+  			  					<if test="city1_no != null and !city1_no.equals('')">
+      									AND cr.city1_no = #{city1_no}
+    							</if>
+    							<if test="city2_no != null and !city2_no.equals('')">
+      									AND cr.city2_no = #{city2_no}
+    							</if>
+    							<if test="dtlcombo1 != null and !dtlcombo1.equals('')">
+      									AND cr.corecruit_no in (
+      									                                          SELECT co.corecruit_no   
+  		                                                                           FROM tb_coskill co
+  		                                                                          WHERE co.dtlcodeCD = #{dtlcombo1}
+      									                                      )
+    							</if>
+  					</where>
+     				 ORDER BY cr.corecruit_no DESC
+      				limit  #{pageindex}, #{pageSize}
+
+	</select>
+
+	<!--  한건 조회 + 스킬 따로 가져오기 -->
+	<select id="skillist" resultType="kr.happyjob.study.myprmg.dto.MypRmgDto">
+		/*kr.happyjob.study.myprmg.dto.MypRmgDto.skillist*/
+		
+       	SELECT co.dtlcodeCD   
+      				,dc.detail_name
+  		 FROM tb_coskill co
+       				inner join tb_detail_code dc on dc.detail_code = co.dtlcodeCD  and group_code = 'dtlcodeCD'
+ 		where co.corecruit_no = #{corecruit_no};
+
+	</select>
+	
+		<!-- 목록 총 갯수 조회 -->
+	<select id="countnoticelist" resultType="int">
+			/*kr.happyjob.study.myprmg.dto.MypRmgDto.countnoticelist*/
+			
+			select count(*)
+        	from tb_corecruit
+
+	</select>
+	
+	<!--  기업 공고 한건 조회 -->
+	<select id="adverselectone" resultType="kr.happyjob.study.myprmg.dto.MypRmgDto">
+		/*kr.happyjob.study.myprmg.dto.MypRmgDto.adverselectone*/
+		
+       	SELECT cr.corecruit_no,
+       				cr.corecruit_title,
+       			    cr.user_no,
+       			    cr.loginID,
+       			    ui.name,
+       			    ui.user_businesstype,
+       			    ui.user_coname,
+       			    ui.user_rpname,
+       			    ui.user_regdate,
+       			    cr.corecruit_strdate,
+       			    cr.corecruit_enddate,
+       			    cr.corecruit_address1,
+       			    cr.corecruit_address2,
+       			    cr.corecruit_mapapi,
+       			    ss.session_code,
+       			    cr.corecruit_mainjob,
+       			    cr.corecruit_requirement,
+       			    cr.corecruit_preference,
+       			    cr.corecruit_etc,
+       			    cr.corecruit_merit,
+       			    cr.corecruit_introduce,
+       			    ct.city1_no,
+       			    ct.city1_name,
+       			    cy.city2_no,
+       			    cy.city2_name,
+       			    cr.att_no,
+       			    at.att_name,
+       			    at.att_phypath,
+       			    at.att_logpath,
+       			    at.att_size,
+       			    at.att_extname,
+       			    cr.like_yn
+   		FROM tb_corecruit cr
+					INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+					INNER JOIN tb_session ss ON ss.session_code = cr.session_code
+					LEFT OUTER JOIN tb_city1 ct ON ct.city1_no = cr.city1_no
+					LEFT OUTER JOIN tb_city2 cy ON cy.city2_no = cr.city2_no
+					LEFT OUTER JOIN tb_att at ON at.att_no = cr.att_no
+		WHERE cr.corecruit_no = #{corecruit_no};
+	</select>
+	
+	<!-- 기업 - 공고 작성 - 회사 & 작성자 정보 불러오기 -->
+	<select id="writerinfo" resultType="kr.happyjob.study.myprmg.dto.MypRmgDto">
+		/*kr.happyjob.study.myprmg.dto.MypRmgDto.writerinfo*/
+		
+           	SELECT user_no,
+       			       	 loginID,
+       			       	 name,
+       			       	 user_businesstype,
+       			       	 user_coname
+   			  FROM tb_userinfo
+		    WHERE loginID = #{loginID};
+	</select>
+
+ 
+<!-- 기업 - 공고 작성 저장 -->	
+<insert id="adversave">
+    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+        select ifnull(max(corecruit_no), 0) + 1 from tb_corecruit
+    </selectKey>   
+    insert into tb_corecruit (
+        corecruit_no,
+        loginID,
+        user_no,
+        session_code,
+        corecruit_title,
+        corecruit_strdate,
+        corecruit_enddate,
+        corecruit_mainjob,
+        corecruit_requirement,
+        corecruit_preference,
+        corecruit_merit,
+        city1_no,
+        city2_no,
+        corecruit_address1,
+        corecruit_address2,
+        corecruit_zipcode,
+        corecruit_introduce,
+        att_no
+    )
+    values (
+         #{no}
+        ,#{loginID}
+        ,(select user_no from tb_userinfo where loginId = #{loginID})
+       	,2
+        ,#{corecruit_title}
+        ,#{corecruit_strdate}
+        ,#{corecruit_enddate}
+        ,#{corecruit_mainjob} 
+        ,#{corecruit_requirement}
+        ,#{corecruit_preference}
+        ,#{corecruit_merit}
+        ,#{city1_no} 
+        ,#{city2_no}
+        ,#{corecruit_address1} 
+        ,#{corecruit_address2}
+        ,#{corecruit_zipcode}
+        ,#{corecruit_introduce}
+        <if test="(fileexist eq 'N'.toString())">
+            ,0
+        </if>
+        <if test="(fileexist eq 'Y'.toString())">
+            ,(select ifnull(max(att_no), 0) from tb_att)
+        </if>
+    )
+</insert>
+
+	<!-- 기업 - 공고 작성 + 스킬 따로 저장 	-->
+		<insert id="adversaveskill">
+		    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+    	        select ifnull(max(corecruit_no),0) from tb_corecruit
+        	</selectKey>   
+    		<!-- kr.happyjob.study.myprmg.dto.MypRmgDto.adversave -->
+		
+	           insert into tb_coskill
+	             (
+	             	corecruit_no
+	   			   ,dtlcodeCD
+	            )
+	   		 values (
+	                 #{no} 
+	                ,#{dtlcodeCD}
+	               ); 
+	</insert>
+	
+	
+	<!--  기업 - 공고 파일 업로드  --> 
+	<insert id="fileinsert">
+	    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+            select ifnull(max(att_no),0) + 1 from tb_att
+        </selectKey>  
+	    insert into tb_att
+	         (
+	             att_no
+               , att_name
+               , att_logpath
+               , att_phypath
+               , att_size
+               , att_extname
+	         ) values (
+	            #{no}
+	           ,#{filereturn.file_nm}   
+	           ,#{filereturn.vrfile_loc}   
+	           ,#{filereturn.file_loc}   
+	           ,#{filereturn.file_Size}   
+	           ,#{filereturn.fileExtension}  
+	         )
+	         
+	</insert>
+	
+	
+	<!--  기술 삭제  --> 
+	<delete id="adverskilldelete">
+    	DELETE FROM tb_coskill 
+		WHERE corecruit_no = #{corecruit_no}
+	</delete>
+	
+	
+	<!--  파일 삭제  --> 
+	<delete id="adverfiledelete">
+		DELETE FROM tb_att
+        WHERE att_no= #{att_no};
+	</delete>
+	
+	
+	 <!--  기업 - 공고 삭제  --> 
+	<delete id="adverdelete">
+		DELETE FROM tb_corecruit 
+		WHERE corecruit_no =  #{corecruit_no}
+	</delete>
+		
+	
+	<!--  지원하기  --> 
+	<insert id="adverapply">
+	    <selectKey resultType="int" keyProperty="no" order="BEFORE">
+            select ifnull(max(appli_no),0) + 1 from tb_applinfo
+        </selectKey>  
+							INSERT INTO tb_applinfo 
+												(
+    											  appli_no
+    											 ,corecruit_no
+    										     ,applyCD
+    											 ,appli_procdate
+    											 ,loginID
+    											)
+    								SELECT
+    											#{no}
+    										   ,#{corecruit_no}
+    										   ,1
+    										   ,CURDATE()
+    										   ,#{loginID}
+									FROM dual
+			 					  WHERE NOT EXISTS 
+			 					  				(
+    							   					SELECT 1
+    								 				FROM tb_applinfo
+    							   					WHERE corecruit_no = #{corecruit_no}
+        							 				AND loginID = #{loginID}
+												);
+							
+	</insert>
+
+
+</mapper>

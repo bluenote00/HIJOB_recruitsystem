@@ -1,0 +1,144 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.cmuRev.dao.CmuRevDao">
+
+<!-- <if	test="userType != 'A'.toString()">
+	    and dc.user_id = #{loginid}
+</if>
+ -->
+
+	<!--  목록 조회 -->
+	<select id="reviewlist" resultType="kr.happyjob.study.cmuRev.model.ReviewModel">
+		
+        select rev_no
+        	,ui.loginID
+     		,ui.user_no
+        	,re.rev_title
+        	,re.rev_content
+        	,re.rev_date
+        	,ui.name
+        	,ui.user_coname
+			
+          from tb_rev re
+               inner join tb_userinfo ui on ui.loginID = re.loginID
+     
+	
+		<where>
+	 <if test="(delyn != null) and (!delyn.equals(''))">
+		    and re.rev_del_yn = #{delyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and re.rev_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{sname}, '%')
+						      or re.rev_title LIKE CONCAT('%', #{sname}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where> 	
+		ORDER BY re.rev_no DESC
+		LIMIT #{pageindex}, #{pageSize}
+		
+	</select>
+	
+	<!-- 목록 총 갯수 조회 -->
+	<select id="countreviewlist" resultType="int">
+
+		select count(*)
+          from tb_rev re
+               inner join tb_userinfo ui on ui.loginID = re.loginID
+              
+		<where>
+		  <if test="(delyn != null) and (!delyn.equals(''))">
+		    and re.rev_del_yn = #{delyn}
+		</if>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and re.rev_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						 and (   ui.name Like CONCAT('%', #{sname}, '%')
+						      or re.rev_title LIKE CONCAT('%', #{sname}, '%')
+						       )
+					</otherwise>
+				</choose>
+			</if>		
+		</where>		
+	</select>
+	
+	<select id="reviewselectone" resultType="kr.happyjob.study.cmuRev.model.ReviewModel">
+	       select rev_no
+     		,ui.user_no
+        	,re.rev_title
+        	,re.rev_content
+        	,re.rev_date
+        	,ui.loginID
+        	,ui.name
+        	,ui.user_coname
+			
+          from tb_rev re
+               inner join tb_userinfo ui on ui.loginID = re.loginID
+        where re.rev_no = #{rev_no}          
+	</select>
+	
+	<insert id="reviewinsert" parameterType="kr.happyjob.study.cmuRev.model.ReviewModel">
+	    <selectKey keyProperty="rev_no" resultType="int" order="BEFORE">
+    		SELECT IFNULL(MAX(rev_no+1),1) FROM tb_rev
+  		</selectKey> 
+	    insert into tb_rev
+	   		 (
+	    	 rev_no
+	    	,loginID 
+        	,user_no 
+        	,rev_title
+        	,rev_content
+        	,rev_date
+        	
+        	
+        	)
+	            
+	    values (
+	                #{rev_no}
+	               ,#{loginID}  
+	               ,(select ifnull(max(user_no),0)  from tb_userinfo)
+	               ,#{rev_title} 
+	               ,#{rev_content}
+	               ,now()
+	             
+	    )
+	</insert>
+	
+	<update id="reviewupdate">
+	    update tb_rev
+	         set rev_title =  #{rev_title}   
+                , rev_content =  #{rev_content}   
+                , rev_date =  now()       
+                
+	     where  rev_no =  #{rev_no}  
+		    
+	</update>
+	
+	
+	<delete id="reviewdelete">
+   		delete from tb_rev
+        where  rev_no =  #{rev_no}  
+	</delete>
+	
+
+			
+</mapper>

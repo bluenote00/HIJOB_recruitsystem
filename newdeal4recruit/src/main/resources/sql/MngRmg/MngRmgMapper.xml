@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.mngrmg.dao.MngRmgDao">
+
+<select id ="revlist" resultType="kr.happyjob.study.mngrmg.model.MngRmgModel">
+		/*kr.happyjob.study.mngrmg.dao.MngRmgDao.revlist*/
+    		select 	tr.rev_no
+    			,	tr.loginID
+    			,	tr.rev_title
+    			,	tr.rev_content
+    			,	tr.rev_date
+    			,	tr.rev_uploader 
+    			, 	tr.rev_status
+    			,	ui.name
+		from tb_rev tr
+			inner join tb_userinfo ui on ui.loginID = tr.loginID
+		<where>
+		<if test ="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')	
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and tr.rev_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						and ( 	ui.name Like CONCAT('%', #{sname}, '%')
+							 or tr.rev_title LIKE CONCAT('%', #{sname}, '%')
+							)
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		ORDER BY tr.rev_no DESC
+		LIMIT #{pageindex}, #{pageSize}
+		
+	</select>
+	
+	
+	<select id ="countrevlist" resultType="int">
+		/*kr.happyjob.study.mngrmg.dao.MngRmgDao.countrevlist*/
+		select count(*)
+			from tb_rev tr
+				inner join tb_userinfo ui on ui.loginID = tr.loginID
+		<where>
+		<if test ="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')	
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and tr.rev_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						and ( 	ui.name Like CONCAT('%', #{sname}, '%')
+							 or tr.rev_title LIKE CONCAT('%', #{sname}, '%')
+							)
+					</otherwise>
+				</choose>
+			</if>
+		</where>		
+	</select>
+	
+	<select id="revselectone" resultType="kr.happyjob.study.mngrmg.model.MngRmgModel">
+	       select 	tr.rev_no
+    			,	tr.loginID
+    			,	tr.rev_title
+    			,	tr.rev_content
+    			,	tr.rev_date
+    			,	tr.rev_uploader 
+    			, 	tr.rev_status
+    			,	ui.name
+		from tb_rev tr
+			inner join tb_userinfo ui on ui.loginID = tr.loginID
+		where tr.rev_no = ${rev_no}  
+	</select>
+
+		
+	<update id ="revupdate">
+		update tb_rev
+			set rev_status = 'Y'
+				where  rev_no = ${rev_no} 
+	</update>
+	
+	<update id ="revdelete">
+		delete from tb_rev
+			where  rev_no = ${rev_no}
+	</update>
+	
+	
+
+</mapper>

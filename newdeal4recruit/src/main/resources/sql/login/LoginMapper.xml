@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.login.dao.LoginDao">
+   
+   <!-- 사용자 로그인 체크 -->
+   <select id="checkLogin" resultType="String">
+      /*kr.happy.study.login.dao.LoginDao.checkLogin*/
+            SELECT  user_Type
+              FROM    tb_userinfo
+            WHERE   loginID = #{lgn_Id}
+               AND  password = #{pwd}
+   </select>
+     
+     <!-- 네이버 사용자 로그인 체크 -->
+   <select id="navercheckLogin" resultType="String">
+      /*kr.happy.study.login.dao.LoginDao.navercheckLogin*/
+            SELECT  user_Type
+              FROM    tb_userinfo 
+            WHERE   loginID = #{email}
+   </select>  
+     
+   
+   <!-- 사용자 로그인 -->
+   <select id="selectLogin" resultType="kr.happyjob.study.login.model.LgnInfoModel">
+      /*kr.happy.study.login.dao.LoginDao.selectLogin*/
+      SELECT  loginID as lgn_id
+               , name as usr_nm
+               , user_Type as mem_author
+               , user_status
+               , user_coname
+      FROM tb_userinfo 
+     WHERE loginID = #{lgn_Id}
+        AND password = #{pwd}
+     </select>
+     
+    <!-- 네이버 사용자 로그인 -->
+   <select id="naverloginProc" resultType="kr.happyjob.study.login.model.LgnInfoModel">
+      /*kr.happy.study.login.dao.LoginDao.naverloginProc*/
+      SELECT  loginID as lgn_id
+      		   , name as usr_nm
+               , user_Type as mem_author
+      FROM tb_userinfo 
+     WHERE loginID = #{email}
+     </select>
+     
+     <!-- 카카오 사용자 로그인 -->
+     <select id="kakaologinProc" resultType="kr.happyjob.study.login.model.LgnInfoModel">
+      /*kr.happy.study.login.dao.LoginDao.kakaologinProc*/
+      SELECT  loginID as lgn_id
+      		   , name as usr_nm
+               , user_Type as mem_author
+      FROM tb_userinfo 
+     WHERE loginID = #{email}
+     </select>      
+     
+     
+<!-- 사용자 메뉴 권한 -->
+   <select id="listUsrMnuAtrt" resultType="kr.happyjob.study.login.model.UsrMnuAtrtModel">
+         /*kr.happy.study.login.dao.LoginDao.listUsrMnuAtrt*/
+            SELECT  ta.mnu_id
+                  ,   ta.hir_mnu_id
+                  ,   ta.mnu_nm
+                  ,   ta.mnu_url
+                  ,   ta.mnu_dvs_cod
+                  ,   ta.grp_num
+                  ,   ta.odr
+                  ,   ta.lvl
+                  ,   ta.mnu_ico_cod
+<!--                   ,   ta.use_poa
+                  ,   ta.dlt_poa -->
+               FROM  tm_mnu_mst ta
+               WHERE EXISTS (
+                             SELECT  1
+                             FROM  tn_usr_mnu_atrt tb
+                             WHERE ta.mnu_id = tb.mnu_id
+                                  AND tb.user_type = #{userType}
+                           )
+                  AND ta.lvl=0
+               ORDER BY ta.odr
+     </select>
+     
+     <!-- 사용자 자식 메뉴 권한 -->
+   <select id="listUsrChildMnuAtrt" resultType="kr.happyjob.study.login.model.UsrMnuChildAtrtModel">
+      /*kr.happy.study.login.dao.LoginDao.listUsrChildMnuAtrt*/
+         SELECT  ta.mnu_id
+               ,   ta.hir_mnu_id
+               ,   ta.mnu_nm
+               ,   ta.mnu_url
+               ,   ta.mnu_dvs_cod
+               ,   ta.grp_num
+               ,   ta.odr
+               ,   ta.lvl
+               ,   ta.use_poa
+               ,   ta.dlt_poa
+         FROM  tm_mnu_mst ta
+         WHERE EXISTS (
+                          SELECT  1
+                            FROM  tn_usr_mnu_atrt tb
+                          WHERE ta.mnu_id = tb.mnu_id
+                               AND tb.user_type = #{userType}
+                     )
+            AND ta.lvl=1
+            AND hir_mnu_id = #{hir_mnu_id}
+         ORDER BY ta.odr
+     </select>
+     
+     <!-- 회원가입 -->
+     <insert id="registerUser" parameterType="java.util.Map">
+     	<selectKey keyProperty="user_no" resultType="int" order="BEFORE">
+			SELECT IFNULL(MAX(user_no+1),1) FROM tb_userinfo
+  		</selectKey>
+     /*kr.happy.study.login.dao.LoginDao.registerUser*/
+     INSERT INTO tb_userinfo (
+     							user_no
+     						,	loginID
+     						,	user_type
+     						,	name
+     						,	user_hp
+     						,	user_regdate
+     						,	user_birthday
+     						,	user_likelist
+     						,	user_businesstype
+							,	user_coname
+     						,	user_rpname
+     						,	user_cornm
+     						,	user_zipcode
+     						,	user_address1
+     						,	user_address2
+     						,	password
+     						,	user_status
+     						,	user_manager
+     						,	user_deccnt
+     						) VALUES (
+     								#{user_no}
+								,	#{loginID}
+								,	#{user_type}  
+								,	#{name}  
+								,	#{user_hp}
+								,	NOW()    
+								,	#{user_birthday}  
+								,	#{user_likelist}  
+								,	#{user_businesstype}  
+								,	#{user_coname}  
+								,	#{user_rpname}
+								,	#{user_cornm}					
+								,	#{user_zipcode}
+								,	#{user_address1}    	
+								,	#{user_address2}  
+								,	#{password}		
+								,	#{user_status}			
+     							,	#{user_manager}								
+								,	#{user_deccnt}								
+     						)
+  	</insert>
+  	
+  	
+  	  <!-- 네이버 회원가입 -->
+  	<insert id="naverRegisterUser" parameterType="java.util.Map">
+     	<selectKey keyProperty="user_no" resultType="int" order="BEFORE">
+			SELECT IFNULL(MAX(user_no+1),1) FROM tb_userinfo
+  		</selectKey>
+     /*kr.happy.study.login.dao.LoginDao.naverRegisterUser*/
+     INSERT INTO tb_userinfo (
+     							user_no
+     						,	loginID
+     						,	user_type
+     						,	name
+     						,	user_hp
+     						,	user_regdate
+     						,	user_birthday
+     						,	user_likelist
+     						,	user_businesstype
+							,	user_coname
+     						,	user_rpname
+     						,	user_cornm
+     						,	user_zipcode
+     						,	user_address1
+     						,	user_address2
+     						,	password
+     						,	user_status
+     						,	user_manager
+     						,	user_deccnt
+     						) VALUES (
+     								#{user_no}
+								,	#{email}
+								,	#{user_type}  
+								,	#{name}
+								,	#{mobile}
+								,	#{user_regdate}    
+								,	#{birthday}
+								,	#{user_likelist}  
+								,	#{user_businesstype}  
+								,	#{user_coname}  
+								,	#{user_rpname}
+								,	#{user_cornm}					
+								,	#{user_zipcode}
+								,	#{user_address1}    	
+								,	#{user_address2}  
+								,	#{password}		
+								,	#{user_status}			
+     							,	#{user_manager}								
+								,	#{user_deccnt}								
+     						)
+     						
+  	</insert>
+  	
+  	
+  	<!-- 네이버 회원가입 -->
+  	<insert id="kakaoRegisterUser" parameterType="java.util.Map">
+     	<selectKey keyProperty="user_no" resultType="int" order="BEFORE">
+			SELECT IFNULL(MAX(user_no+1),1) FROM tb_userinfo
+  		</selectKey>
+     /*kr.happy.study.login.dao.LoginDao.kakaoRegisterUser*/
+     INSERT INTO tb_userinfo (
+     							user_no
+     						,	loginID
+     						,	user_type
+     						,	name
+     						,	user_hp
+     						,	user_regdate
+     						,	user_birthday
+     						,	user_likelist
+     						,	user_businesstype
+							,	user_coname
+     						,	user_rpname
+     						,	user_cornm
+     						,	user_zipcode
+     						,	user_address1
+     						,	user_address2
+     						,	password
+     						,	user_status
+     						,	user_manager
+     						,	user_deccnt
+     						) VALUES (
+     								#{user_no}
+								,	#{email}
+								,	#{user_type}  
+								,	#{name}
+								,	#{mobile}
+								,	#{user_regdate}    
+								,	#{birthday}
+								,	#{user_likelist}  
+								,	#{user_businesstype}  
+								,	#{user_coname}  
+								,	#{user_rpname}
+								,	#{user_cornm}					
+								,	#{user_zipcode}
+								,	#{user_address1}    	
+								,	#{user_address2}  
+								,	#{password}		
+								,	#{user_status}			
+     							,	#{user_manager}								
+								,	#{user_deccnt}								
+     						)
+     						
+  	</insert>
+  	
+  	
+
+     
+     <!-- 중복 검사  loginID 중복검사 -->
+	<select id="check_loginID" parameterType="String" resultType="int">
+		SELECT count(*)
+		FROM tb_userinfo
+		WHERE loginID = #{loginID}
+		
+	</select>
+	
+	<!-- naver 중복 검사  loginID 중복검사 -->
+	<select id="navercheck_loginID" parameterType="String" resultType="int">
+		SELECT count(*)
+		FROM tb_userinfo
+		WHERE loginID = #{loginID}
+		
+	</select>
+
+
+	
+	
+	<!-- 회원가입 이메일 중복 검사  -->
+	<!-- <select id="check_email" parameterType="String" resultType="int">
+		SELECT count(*)
+		FROM tb_userinfo
+		WHERE user_email = #{user_email}
+	</select> -->
+	
+     <!-- 사용자 ID 찾기 -->
+      <select id="selectFindId" resultType="kr.happyjob.study.login.model.LgnInfoModel">
+      /*kr.happyjob.study.login.dao.LoginDao.selectFindId*/
+      SELECT  u.loginID as loginID
+      	  ,	  u.user_email as user_email
+      FROM    tb_userinfo as u
+      WHERE   u.del_cd ="n"
+      AND	  u.user_email = #{user_email}
+     </select>
+
+      
+     <!-- 사용자 PW 찾기 -->
+     <select id="selectFindPw" resultType="kr.happyjob.study.login.model.LgnInfoModel">
+      /*kr.happyjob.study.login.dao.LoginDao.selectFindPw*/
+      SELECT  u.loginID as loginID
+      	  ,   u.password as password
+      	  ,	  u.user_email as user_email
+      FROM    tb_userinfo as u
+      WHERE   u.del_cd ="n"
+      AND	  u.user_email = #{user_email}
+      AND 	  u.loginID = #{loginID}
+     </select>
+
+     
+     <!-- 사용자 PW 찾기 ID 체크-->
+     <select id="registerIdCheck" resultType="kr.happyjob.study.login.model.LgnInfoModel">
+     SELECT     u.loginID as loginID
+     FROM    	tb_userinfo as u
+     WHERE   	u.del_cd ="n"
+     AND 	  	u.loginID = #{loginID}
+     </select>  
+     
+     
+     <!-- 이력서 파일 업로드 -->
+     <insert id="insertUserinfoFile">
+	     insert into tb_att (
+			  att_no,att_name,att_phypath,att_logpath,att_size,att_extname,att_extname
+			)select
+			  ,#{att_no}  <!-- qna_title - IN varchar(50) -->
+			  ,#{att_name}   <!-- qna_contents - IN varchar(50)-->
+			  ,#{fileInfo.att_phypath}   <!-- file_nm - IN varchar(50) -->
+			  ,#{fileInfo.att_logpath}  <!--  file_loc - IN varchar(50) -->
+			  ,#{fileInfo.att_size}   <!-- file_size - IN varchar(50) -->
+			  ,#{att_extname}
+			  ,#{enr_user}   <!-- enr_user - IN varchar(20) -->
+			  ,DATE_FORMAT(NOW(),'%Y-%c-%d %T' )  <!--  enr_date - IN date -->
+			  ,#{upd_user}   <!-- upd_user - IN varchar(20) -->
+			  ,DATE_FORMAT(NOW(),'%Y-%c-%d %T' )   <!--  upd_date - IN date -->
+			from tb_att
+	</insert>
+	
+	<select id="getDirectory" resultType="String">
+		select concat('F', date_format(now(),'%y%m%d')) AS dirPath
+	</select>
+	
+	<update id="updateUserinfoFile">
+		update tb_att SET
+		   att_no = #{att_no} <!-- varchar(50) -->
+		  ,att_name =  concat(DATE_FORMAT(NOW(),'%Y-%c-%d %T' ),'- 수정됨 \n',#{att_name}) <!-- varchar(50) -->
+		  ,att_phypath = #{att_phypath} <!-- varchar(50) -->
+		  ,att_logpath = #{att_logpath}  <!--  varchar(50) -->
+		  ,att_size = #{att_size}  <!-- varchar(50) -->
+		  ,att_extname =#{att_extname}
+		  ,upd_user = #{loginID} <!-- varchar(20) -->
+		  ,upd_date = DATE_FORMAT(NOW(),'%Y-%c-%d %T' )  <!-- date -->
+		WHERE qna_seq = #{qna_seq} <!--  varchar(20) -->
+	
+	</update>
+
+</mapper>

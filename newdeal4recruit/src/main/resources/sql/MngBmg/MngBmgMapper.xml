@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.mngbmg.dao.MngBmgDao">
+
+<select id ="qnalist" resultType="kr.happyjob.study.mngbmg.model.MngBmgModel">
+		/*kr.happyjob.study.mngbmg.dao.MngBmgDao.qnalist*/
+    		select tq.qna_no
+    		  ,tq.qna_title
+			  ,tq.qna_content
+			  ,tq.qna_uploaddate
+			  ,tq.qna_uploader
+			  ,tq.qna_status
+			  ,ui.name		
+		from tb_qna tq  
+ 			 inner join tb_userinfo ui on ui.user_no = tq.user_no
+		<where>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and tq.qna_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						and ( ui.name Like CONCAT('%', #{sname}, '%')
+							or tq.qna_title LIKE CONCAT('%', #{sname}, '%')
+							)
+					</otherwise>	
+				</choose>
+			</if>
+		</where>
+		ORDER BY tq.qna_no DESC
+		LIMIT #{pageindex}, #{pageSize}
+	
+	</select>
+	
+	
+	<select id ="countqnalist" resultType="int">
+		/*kr.happyjob.study.mngbmg.dao.MngBmgDao.countqnalist*/
+		select count(*)
+			from tb_qna tq  
+ 			 inner join tb_userinfo ui on ui.user_no = tq.user_no
+		<where>
+		<if test="(sname != null) and (!sname.equals(''))">
+				<choose>
+					<when
+						test="searchKey eq 'writer'.toString()">
+						and ui.name Like CONCAT('%', #{sname}, '%')
+					</when>
+					<when
+						test="searchKey eq 'title'.toString()">
+						and tq.qna_title LIKE CONCAT('%', #{sname}, '%')
+					</when>
+					<otherwise>
+						and ( ui.name Like CONCAT('%', #{sname}, '%')
+							or tq.qna_title LIKE CONCAT('%', #{sname}, '%')
+							)
+					</otherwise>	
+				</choose>
+			</if>
+		</where>
+	</select>
+	
+	<select id="qnaselectone" resultType="kr.happyjob.study.mngbmg.model.MngBmgModel">
+	       select tq.qna_no
+    		  ,tq.qna_title
+			  ,tq.qna_content
+			  ,tq.qna_uploaddate
+			  ,tq.qna_uploader
+			  ,tq.qna_status
+			  ,ui.name		
+		from tb_qna tq  
+ 			 inner join tb_userinfo ui on ui.user_no = tq.user_no
+        where tq.qna_no = #{qna_no}     
+	</select>
+	
+
+
+	<update id ="qnaupdate">
+		update tb_qna
+					set 	qna_status = 'Y'
+							
+		where  qna_no = #{qna_no} 
+	</update>
+
+	<update id ="qnadelete">
+		delete from tb_qna
+		where  qna_no = #{qna_no} 
+	</update>
+	
+	
+	
+	
+	
+
+
+</mapper>

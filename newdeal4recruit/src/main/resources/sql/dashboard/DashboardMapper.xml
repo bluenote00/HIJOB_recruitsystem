@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.dashboard.dao.DashboardDao">
+
+	<select id="openresumelist" resultType="kr.happyjob.study.dashboard.model.DashboardModel">
+	
+		SELECT
+    		re.resume_no,
+   		 	re.resume_name,
+   		 	re.resume_openunopen,
+   		 	re.skill1,
+   		 	dc.detail_name as skill1name,
+			re.skill2,
+			dc2.detail_name as skill2name,
+			re.skill3,
+			dc3.detail_name as skill3name
+		FROM
+    		tb_resume re
+    		inner join tb_detail_code dc on dc.detail_code = re.skill1 and dc.group_code = 'stackCD'
+    		inner join tb_detail_code dc2 on dc2.detail_code = re.skill2 and dc2.group_code = 'stackCD'
+    		inner join tb_detail_code dc3 on dc3.detail_code = re.skill3 and dc3.group_code = 'stackCD'
+		WHERE
+    		re.resume_openunopen = 'Y'    		
+    		<if test="(dtlcombo1 != null) and (!dtlcombo1.equals(''))">
+    		and (
+    		         re.skill1 = #{dtlcombo1}
+    		      or re.skill2 = #{dtlcombo1}  
+    		      or re.skill3 = #{dtlcombo1}  
+    		    )
+    		</if>
+		ORDER BY
+    		re.resume_no DESC
+	
+	</select>
+
+
+	<select id="countopenlist" resultType="int">
+		select
+		  count(*)
+		from tb_resume
+		where resume_openunopen = 'Y'
+	</select>
+
+	<!--  받은 메세지 정보 가져오기 -->
+	<select id="messages" resultType="kr.happyjob.study.dashboard.model.DashboardModel">
+		SELECT msg_title
+			  ,msg_content
+			  ,msg_receiveID
+			  ,ui.loginID
+		 FROM tb_msg m
+		 JOIN tb_userinfo ui ON ui.loginID = msg_receiveID
+		WHERE msg_receiveID = #{loginID}
+	</select>
+	
+	<select id="cntEngineer" resultType="int">
+		/*kr.happy.study.system.dao.DashboardDao.cntEngineer*/
+		SELECT COUNT(loginID)
+		FROM 	tb_userinfo
+		WHERE	user_type = 'B'
+	</select>	
+	
+	<select id="cntCompany" resultType="int">
+		/*kr.happy.study.system.dao.DashboardDao.cntCompany*/
+		SELECT COUNT(loginID)
+		FROM 	tb_userinfo
+		WHERE	user_type = 'C'
+	</select>	
+	
+	<select id="cntProject" resultType="int">
+		/*kr.happy.study.system.dao.DashboardDao.cntProject*/
+		SELECT COUNT(pro_no)
+		FROM 	tb_prolist
+		<!-- WHERE	reg_date <![CDATA[<=]]> STR_TO_DATE(#{to_date}, '%Y-%m-%d')  --> 
+	</select>	
+	
+	<!-- 
+	<select id="cntApplicant" resultType="int">
+		/*kr.happy.study.system.dao.DashboardDao.cntApplicant*/
+		SELECT COUNT(p.loginID)
+		FROM 	tb_prolist p, tb_consupport cs
+		WHERE	reg_date <![CDATA[<=]]> STR_TO_DATE(#{reg_date}, '%Y-%m-%d') 
+	</select>
+	 -->
+	 
+	 <!--  기업 리스트 최신순 조회 -->
+	<select id="adverlist_new" resultType="kr.happyjob.study.dashboard.model.DashboardModel">
+		/*kr.happyjob.study.dashboard.model.DashboardModel.adverlist_new*/
+		
+   SELECT cr.corecruit_no,
+                   cr.corecruit_title,
+                    cr.user_no,
+                    cr.loginID,
+                    ui.name,
+                    ui.user_businesstype,
+                    ui.user_coname,
+                    ui.user_rpname,
+                    ui.user_regdate,
+                    cr.corecruit_strdate,
+                    cr.corecruit_enddate,
+                    cr.corecruit_address1,
+                    cr.corecruit_address2,
+                    ss.session_code,
+                    cr.city1_no,
+                   ct.detail_name as city1_name,
+                    cr.city2_no,
+                   cy.detail_name as city2_name,
+                    cr.att_no,
+                    at.att_name,
+                    at.att_phypath,
+                    at.att_logpath,
+                    at.att_size,
+                    at.att_extname,
+                    cr.like_yn
+         FROM tb_corecruit cr
+               INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+               INNER JOIN tb_session ss ON ss.session_code = cr.session_code
+                LEFT OUTER JOIN tb_detail_code ct ON ct.detail_code = cr.city1_no and ct.group_code = 'addressCD'
+               LEFT OUTER JOIN tb_detail_code cy ON cy.detail_code = cr.city2_no and cy.group_code = cr.city1_no
+               LEFT OUTER JOIN tb_att at ON at.att_no = cr.att_no
+      ORDER BY corecruit_no DESC;
+      
+	</select>
+
+
+<!--  한건 조회 + 스킬 따로 가져오기 -->
+	<select id="skillist" resultType="kr.happyjob.study.dashboard.model.DashboardModel">
+		/*kr.happyjob.study.dashboard.model.DashboardModel.skillist*/
+		
+       	SELECT co.dtlcodeCD   
+      				,dc.detail_name
+  		 FROM tb_coskill co
+       				inner join tb_detail_code dc on dc.detail_code = co.dtlcodeCD  and group_code = 'dtlcodeCD'
+ 		where co.corecruit_no = #{corecruit_no};
+
+	</select>
+	
+
+<!--  기업 리스트 좋아요순 조회 -->
+	<select id="adverlist_like" resultType="kr.happyjob.study.dashboard.model.DashboardModel">
+		/*kr.happyjob.study.dashboard.model.DashboardModel.adverlist_like*/
+		
+       	   
+		select *   
+  		  from (
+         				SELECT corecruit_no, COUNT(corecruit_no) AS count
+	       				FROM tb_like
+		      			GROUP BY corecruit_no
+		     			HAVING COUNT(corecruit_no) > 1
+       				) cntlist
+   inner join (   
+   					    SELECT cr.corecruit_no,
+                   					 cr.corecruit_title,
+                    				 cr.user_no,
+                    			     cr.loginID,
+                    			     ui.name,
+                    			     ui.user_businesstype,
+                    			     ui.user_coname,
+                    			     ui.user_rpname,
+                    			     ui.user_regdate,
+                    			     cr.corecruit_strdate,
+                    			     cr.corecruit_enddate,
+                    			     cr.corecruit_address1,
+                    			     cr.corecruit_address2,
+                    			     ss.session_code,
+                    			     cr.city1_no,
+                    			     ct.detail_name as city1_name,
+                    			     cr.city2_no,
+                    			     cy.detail_name as city2_name,
+                    			     cr.att_no,
+                    			     at.att_name,
+                    			     at.att_phypath,
+                    			     at.att_logpath,
+                    			     at.att_size,
+                    			     at.att_extname,
+                    			     cr.like_yn
+         FROM tb_corecruit cr
+               INNER JOIN tb_userinfo ui ON ui.loginID = cr.loginID
+               INNER JOIN tb_session ss ON ss.session_code = cr.session_code
+                LEFT OUTER JOIN tb_detail_code ct ON ct.detail_code = cr.city1_no and ct.group_code = 'addressCD'
+               LEFT OUTER JOIN tb_detail_code cy ON cy.detail_code = cr.city2_no and cy.group_code = cr.city1_no
+               LEFT OUTER JOIN tb_att at ON at.att_no = cr.att_no       
+       ) infolist on infolist.corecruit_no = cntlist.corecruit_no
+       ORDER BY cntlist.count DESC;
+		
+	</select>
+
+</mapper>
