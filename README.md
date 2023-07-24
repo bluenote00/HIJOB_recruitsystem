@@ -75,6 +75,7 @@
 ### 🏗 ERD 구조도
 ![하이잡최종ERD_0712_수정](https://github.com/bluenote00/HIJOB_recruitsystem/assets/118717795/d2af5c47-fc0e-453e-8d9b-f5743dc6ac15)
 
+<br>
 
 ### 🏞 MAIN VIEW
 + 로그인 화면
